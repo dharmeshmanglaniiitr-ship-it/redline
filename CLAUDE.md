@@ -16,6 +16,9 @@ red lines that drives the analysis, and a saved library of past documents.
 ## Scope — build this and stop
 Summary, ranked risk flags with citation, counter-offers, document Q&A, editable
 red-lines, saved library. Nothing else.
+Risk flags and counter-offers must account for the document's governing jurisdiction —
+severity and enforceability assumptions vary by jurisdiction and are never asserted as
+universal (ADR 0005).
 If something looks like an obvious next step and isn't on that list, ask before
 building it.
 Excluded on purpose: payments/billing, OCR for scanned documents, sharing a document
