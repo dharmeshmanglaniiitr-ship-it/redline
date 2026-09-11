@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-11T00:00:00Z",
+  "title": "Design System: Redline",
+  "extensions": {
+    "colorMeta": {
+      "field": {
+        "role": "secondary",
+        "displayName": "Marking Blue",
+        "canonical": "#16307f",
+        "tonalRamp": ["#080f27", "#0c1840", "#0f2159", "#132972", "#16307f", "#3450a4", "#6f85c6", "#b3bfe2"]
+      },
+      "field-deep": {
+        "role": "secondary",
+        "displayName": "Deep Marking Blue",
+        "canonical": "#0f2159",
+        "tonalRamp": ["#050b1d", "#08122f", "#0b1942", "#0f2159", "#16307f", "#2a48a8", "#6b82c8", "#b0bce1"]
+      },
+      "field-ink": {
+        "role": "neutral",
+        "displayName": "Proof Stock on Field",
+        "canonical": "#e9eae3",
+        "tonalRamp": ["#232420", "#3b3c36", "#55564e", "#717268", "#8e8f85", "#adaea4", "#cbccc3", "#e9eae3"]
+      },
+      "field-soft": {
+        "role": "neutral",
+        "displayName": "Field Soft Blue",
+        "canonical": "#a9b6dc",
+        "tonalRamp": ["#1b2440", "#2b3961", "#3d4f82", "#5266a1", "#6b7fb8", "#8a9bcb", "#a9b6dc", "#d2daee"]
+      },
+      "stock": {
+        "role": "neutral",
+        "displayName": "Proof Stock",
+        "canonical": "#e9eae3",
+        "tonalRamp": ["#232420", "#3b3c36", "#55564e", "#717268", "#8e8f85", "#adaea4", "#cbccc3", "#e9eae3"]
+      },
+      "stock-shade": {
+        "role": "neutral",
+        "displayName": "Stock Shade",
+        "canonical": "#dcded2",
+        "tonalRamp": ["#22241c", "#3a3c31", "#535648", "#6e7160", "#8b8e7c", "#a9ac99", "#c5c8b6", "#dcded2"]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule Grey",
+        "canonical": "#b7b9ac",
+        "tonalRamp": ["#1f201b", "#35372f", "#4d4f45", "#67695c", "#828475", "#9d9f90", "#b7b9ac", "#d9dad0"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Document Ink",
+        "canonical": "#14140f",
+        "tonalRamp": ["#0a0a07", "#14140f", "#2a2a20", "#434335", "#5e5e4d", "#7b7b68", "#a0a08d", "#cecebd"]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Soft Ink",
+        "canonical": "#55554c",
+        "tonalRamp": ["#14140f", "#24241d", "#37372e", "#4a4a41", "#55554c", "#7a7a70", "#a5a59a", "#d0d0c6"]
+      },
+      "mark": {
+        "role": "primary",
+        "displayName": "Corrector's Vermilion",
+        "canonical": "#c8341f",
+        "tonalRamp": ["#3a0d05", "#57130a", "#761a0e", "#9d2614", "#c8341f", "#e0573f", "#ee8c7b", "#f8c6bc"]
+      },
+      "mark-deep": {
+        "role": "primary",
+        "displayName": "Stamped Vermilion",
+        "canonical": "#9d2614",
+        "tonalRamp": ["#2c0a04", "#440f07", "#5e150b", "#7c1d0f", "#9d2614", "#c8341f", "#e3705b", "#f4b3a6"]
+      },
+      "pencil": {
+        "role": "tertiary",
+        "displayName": "Blue Pencil",
+        "canonical": "#2b4c8c",
+        "tonalRamp": ["#0a1220", "#132139", "#1d3155", "#2b4c8c", "#3c64ad", "#6285c4", "#93abd8", "#c7d3ec"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Galley Head", "purpose": "The sheet's own head, once per page, capped at 18ch. Nothing sits above it." },
+      "headline": { "displayName": "Field Headline", "purpose": "Section heads and the closing statement on the blue field." },
+      "title": { "displayName": "Finding Title", "purpose": "Finding titles in the margin; one step down (0.92rem) in the ranked index." },
+      "body": { "displayName": "Product Voice", "purpose": "Redline's own prose at 58ch." },
+      "body-small": { "displayName": "Cost Note", "purpose": "The cost explanation under an opened margin mark, at 40ch." },
+      "document": { "displayName": "Document Voice", "purpose": "Quoted contract clause text in Tinos at 58ch. Never used for product copy." },
+      "document-title": { "displayName": "Clause Heading", "purpose": "Clause numbers and headings, and clause references in the index." },
+      "label": { "displayName": "Section Label", "purpose": "Uppercase 0.2em-tracked section labels." },
+      "legend": { "displayName": "Production Legend", "purpose": "Masthead and galley foot rows, tabular figures." },
+      "stamp": { "displayName": "Stamp Label", "purpose": "The primary action's block label." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Exponential ease-out. The only authored easing in the system." },
+      { "name": "draw-leader", "value": "620ms var(--ease-out) forwards, stroke-dashoffset 1 to 0 on a pathLength=1 polyline", "purpose": "The one authored moment: the leader rule drawing itself from margin mark to sentence. Re-keyed on selection. Desktop only (>=1024px)." },
+      { "name": "state-colour", "value": "200ms", "purpose": "Hover and focus colour transitions on stamps, index rows and margin marks." },
+      { "name": "clause-dim", "value": "500ms opacity, 0.75 at rest to 1.0 when selected", "purpose": "Attention as a lighting change rather than a lift." },
+      { "name": "reduced-motion", "value": "@media (prefers-reduced-motion: reduce) { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }", "purpose": "Global honouring of reduced-motion. Applies to all of the above." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ],
+    "knownGaps": [
+      {
+        "name": "Narrow-viewport evidence",
+        "body": "No capture at a real 390px viewport was ever obtained; Chrome in this environment refused every window resize. The narrow-width evidence on file is a simulation rendering the h1 at ~56px because 4.6vw kept evaluating at 1536px; a real 390px viewport hits the 2.05rem clamp floor at ~33px. The head's column collapse, the masthead's stacked legend, the galley foot's three-part row and the marked-sentence reflow are UNVERIFIED at narrow widths. Recorded by user decision; not an action item."
+      }
+    ],
+    "contrastCommitments": [
+      { "pair": "stock on mark-deep (stamp label)", "ratio": "6.38:1", "note": "Why the stamp fill is mark-deep and not mark." },
+      { "pair": "mark-deep on field (stamp fill)", "ratio": "1.55:1", "note": "Fails on its own. This is why the stamp on the blue field carries a 3px stock keyline. Never remove it." },
+      { "pair": "stamp hover inversions", "ratio": ">= AA", "note": "Both inversions (transparent+mark-deep on stock; stock fill+mark-deep label on field) stay at or above AA." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Stamp (on proof stock)",
+      "kind": "button",
+      "refersTo": "stamp-galley",
+      "description": "The primary action as an inked rubber stamp, used on the galley sheet.",
+      "html": "<a href=\"#\" class=\"ds-stamp-galley\">Run your own contract</a>",
+      "css": ".ds-stamp-galley { display: inline-block; cursor: pointer; border: 3px solid var(--mark-deep, #9d2614); background: var(--mark-deep, #9d2614); color: var(--stock, #e9eae3); padding: 0.75rem 1.75rem; font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; text-decoration: none; border-radius: 0; transition: background-color 200ms, color 200ms; } .ds-stamp-galley:hover, .ds-stamp-galley:focus-visible { background: transparent; color: var(--mark-deep, #9d2614); } .ds-stamp-galley:focus-visible { outline: 2px solid var(--mark, #c8341f); outline-offset: 3px; }"
+    },
+    {
+      "name": "Stamp (on the blue field)",
+      "kind": "button",
+      "refersTo": "stamp-field",
+      "description": "Same action on marking blue. The 3px proof-stock keyline is load-bearing: the fill is only 1.55:1 against the field.",
+      "html": "<div style=\"background:#16307f;padding:24px\"><a href=\"#\" class=\"ds-stamp-field\">Run your own contract</a></div>",
+      "css": ".ds-stamp-field { display: inline-block; cursor: pointer; border: 3px solid var(--stock, #e9eae3); background: var(--mark-deep, #9d2614); color: var(--stock, #e9eae3); padding: 0.875rem 1.75rem; font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; text-decoration: none; border-radius: 0; transition: background-color 200ms, color 200ms; } .ds-stamp-field:hover, .ds-stamp-field:focus-visible { background: var(--stock, #e9eae3); color: var(--mark-deep, #9d2614); } .ds-stamp-field:focus-visible { outline: 2px solid var(--mark, #c8341f); outline-offset: 3px; }"
+    },
+    {
+      "name": "Severity Meter",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Severity on three simultaneous channels: filled steps out of four, the severity word, and a visually hidden 'severity, N of 4'. WCAG 2.2 AA requirement, not decoration.",
+      "html": "<span class=\"ds-severity\"><span class=\"ds-severity-steps\" aria-hidden=\"true\"><span class=\"on\"></span><span class=\"on\"></span><span class=\"on\"></span><span></span></span><span class=\"ds-severity-word\">High<span class=\"ds-sr\"> severity, 3 of 4</span></span></span>",
+      "css": ".ds-severity { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif; } .ds-severity-steps { display: flex; gap: 3px; } .ds-severity-steps span { display: block; height: 12px; width: 5px; border: 1px solid var(--mark, #c8341f); background: transparent; } .ds-severity-steps span.on { background: var(--mark, #c8341f); } .ds-severity-word { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.16em; color: var(--mark-deep, #9d2614); } .ds-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }"
+    },
+    {
+      "name": "Ranked Index Row",
+      "kind": "nav",
+      "refersTo": "index-row",
+      "description": "A row of the worst-first findings index. Active row takes document ink plus a 2px vermilion underline; rank numeral turns stamped vermilion.",
+      "html": "<ol class=\"ds-index\"><li><button type=\"button\" aria-pressed=\"true\" class=\"ds-index-row is-active\"><span class=\"ds-index-rank\">1</span><span class=\"ds-index-body\"><span class=\"ds-index-title\">Payment left to the client's judgment</span><span class=\"ds-index-meta\"><span class=\"ds-index-clause\">Clause 4.2</span></span></span></button></li><li><button type=\"button\" aria-pressed=\"false\" class=\"ds-index-row\"><span class=\"ds-index-rank\">2</span><span class=\"ds-index-body\"><span class=\"ds-index-title\">Ownership reaches past the work</span><span class=\"ds-index-meta\"><span class=\"ds-index-clause\">Clause 7.1</span></span></span></button></li></ol>",
+      "css": ".ds-index { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule, #b7b9ac); background: var(--stock, #e9eae3); max-width: 24rem; } .ds-index li { border-bottom: 1px solid var(--rule, #b7b9ac); } .ds-index-row { display: flex; width: 100%; align-items: flex-start; gap: 0.75rem; padding: 0.625rem 0; text-align: left; background: transparent; border: 0; cursor: pointer; font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif; transition: background-color 200ms; } .ds-index-row:hover { background: var(--stock-shade, #dcded2); } .ds-index-row:focus-visible { outline: 2px solid var(--mark, #c8341f); outline-offset: 3px; } .ds-index-rank { width: 0.75rem; flex-shrink: 0; font-size: 0.78rem; font-weight: 700; color: var(--ink-soft, #55554c); font-variant-numeric: tabular-nums lining-nums; } .ds-index-row.is-active .ds-index-rank { color: var(--mark-deep, #9d2614); } .ds-index-title { display: block; font-size: 0.92rem; font-weight: 600; line-height: 1.375; color: var(--ink-soft, #55554c); } .ds-index-row.is-active .ds-index-title { color: var(--ink, #14140f); text-decoration: underline; text-decoration-color: var(--mark, #c8341f); text-decoration-thickness: 2px; text-underline-offset: 4px; } .ds-index-meta { display: block; margin-top: 0.375rem; } .ds-index-clause { font-family: var(--font-tinos), 'Times New Roman', Times, serif; font-size: 0.82rem; color: var(--ink-soft, #55554c); font-variant-numeric: tabular-nums lining-nums; }"
+    },
+    {
+      "name": "Margin Mark",
+      "kind": "custom",
+      "refersTo": "margin-mark",
+      "description": "The margin half of the paired mark: proof glyph, finding title, severity meter, and on selection the cost note. Ships only alongside its in-line twin.",
+      "html": "<div class=\"ds-margin\"><button type=\"button\" aria-pressed=\"true\" class=\"ds-margin-btn\"><span class=\"ds-margin-row\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" class=\"ds-mark-glyph\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 17 12 7l9 10\"/></svg><span class=\"ds-margin-body\"><span class=\"ds-margin-title\">Ownership reaches past the work</span></span></span></button><p class=\"ds-margin-cost\">Most contracts take what you build for the client. This one also takes the tools and methods you brought with you.</p></div>",
+      "css": ".ds-margin { background: var(--stock, #e9eae3); border-left: 1px solid var(--rule, #b7b9ac); padding-left: 1.75rem; max-width: 18rem; font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif; } .ds-margin-btn { display: block; width: 100%; text-align: left; background: transparent; border: 0; cursor: pointer; transition: background-color 200ms; } .ds-margin-btn:hover { background: var(--stock-shade, #dcded2); } .ds-margin-btn:focus-visible { outline: 2px solid var(--mark, #c8341f); outline-offset: 3px; } .ds-margin-row { display: flex; align-items: flex-start; gap: 0.75rem; color: var(--mark, #c8341f); } .ds-mark-glyph { height: 1.5rem; width: 1.5rem; flex-shrink: 0; } .ds-margin-title { display: block; font-size: 1rem; font-weight: 600; line-height: 1.375; color: var(--ink, #14140f); } .ds-margin-cost { margin: 1rem 0 0; max-width: 40ch; font-size: 0.94rem; line-height: 1.55; color: var(--ink-soft, #55554c); }"
+    },
+    {
+      "name": "Marked Sentence",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "The in-line half of the paired mark: the same proof glyph at 0.95em before the sentence, plus a 1.5px vermilion decoration (strike / solid underline when selected / dotted when not).",
+      "html": "<p class=\"ds-clause\"><span>Contractor shall submit each Deliverable to Client for review. </span><span><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" class=\"ds-mark-inline\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12h16\"/><path d=\"M20 8v8\"/></svg><span class=\"ds-sentence is-struck is-selected\">The Deliverables shall be deemed accepted only upon the Client's written confirmation that they are satisfactory to the Client in its sole and absolute discretion.</span></span></p>",
+      "css": ".ds-clause { margin: 0; max-width: 58ch; font-family: var(--font-tinos), 'Times New Roman', Times, serif; font-size: 1.06rem; line-height: 1.62; color: var(--ink, #14140f); background: var(--stock, #e9eae3); } .ds-mark-inline { display: inline; height: 0.95em; width: 0.95em; transform: translateY(-0.1em); vertical-align: middle; margin-right: 0.125rem; color: var(--mark, #c8341f); } .ds-sentence { text-decoration-color: var(--mark, #c8341f); text-underline-offset: 5px; } .ds-sentence.is-struck { text-decoration-line: line-through; text-decoration-thickness: 1.5px; } .ds-sentence.is-selected { background: var(--stock-shade, #dcded2); } .ds-sentence:not(.is-struck):not(.is-selected) { text-decoration-line: underline; text-decoration-style: dotted; text-decoration-thickness: 1.5px; }"
+    },
+    {
+      "name": "Galley Masthead",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "The production legend that opens the sheet: uppercase, 0.2em tracked, tabular figures, closed by a 2px ink rule.",
+      "html": "<div class=\"ds-masthead\"><span>Sample: independent contractor agreement</span><span class=\"ds-masthead-soft\">Marked proof</span></div>",
+      "css": ".ds-masthead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1.5rem; border-bottom: 2px solid var(--ink, #14140f); padding-bottom: 0.75rem; background: var(--stock, #e9eae3); font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2em; color: var(--ink, #14140f); font-variant-numeric: tabular-nums lining-nums; } .ds-masthead-soft { color: var(--ink-soft, #55554c); }"
+    },
+    {
+      "name": "Cleared Row",
+      "kind": "card",
+      "refersTo": "cleared-row",
+      "description": "A clause examined with nothing to report. The only place blue pencil appears alongside its section heading.",
+      "html": "<ul class=\"ds-cleared\"><li><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" class=\"ds-cleared-check\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 13.5 9 18.5 20 6\"/></svg><span><span class=\"ds-cleared-name\">Confidentiality</span><span class=\"ds-cleared-note\">Runs both ways, three years</span></span></li></ul>",
+      "css": ".ds-cleared { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule, #b7b9ac); background: var(--stock, #e9eae3); font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif; } .ds-cleared li { display: flex; align-items: flex-start; gap: 0.75rem; border-bottom: 1px solid var(--rule, #b7b9ac); padding: 0.875rem 0; } .ds-cleared-check { height: 1.25rem; width: 1.25rem; flex-shrink: 0; margin-top: 0.125rem; color: var(--pencil, #2b4c8c); } .ds-cleared-name { display: block; font-size: 0.95rem; font-weight: 600; color: var(--ink, #14140f); } .ds-cleared-note { display: block; font-size: 0.88rem; color: var(--ink-soft, #55554c); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Marked Proof",
+    "overview": "Redline is a proof galley on a corrector's desk. A deep marking-blue field carries the page; the document sits on it as a cool proof-stock sheet with real trim corners and wide, functional margins. Every correction is made in corrector's vermilion, and every correction is made twice — once in the line and once in the margin — because that is what proof notation is and because it is also literally what the product does: point at a sentence.\n\nThe system is dense, flat and typographic. There are no cards, no panels, no floating browser frames, no shadows and no rounded corners; separation is done with hairline rules, weight-2 rules at masthead and foot, and the hard edge between blue field and proof stock. Density is high on purpose: a Signer reading a contract is reading, not scanning, so the measure is held at 58–68ch and the type ramp is small-stepped rather than dramatic. The one display moment is the galley's own head, which sits at the top of the sheet with no chrome above it.\n\nTwo voices carry all text. Contract language is set in Tinos, a Times-metric face, so the quotation looks like the thing being quoted; the product's own voice is Archivo, tracked and uppercase at label scale in the register of a printer's production legend. Neither is a system face. Confirmed rejection: the legal-tech arrangement of a confident hero above a floating browser frame holding a blurred document with colored highlight chips.",
+    "keyCharacteristics": [
+      "Paired marks: every finding appears in the line and in the margin, never one alone.",
+      "Vermilion is the only correcting hand; blue pencil marks only what was cleared.",
+      "Flat, hairline-ruled, zero-radius, zero-shadow.",
+      "Two type voices: Tinos for the document, Archivo for the product.",
+      "Exactly one authored motion: the leader rule drawing itself."
+    ],
+    "rules": [
+      { "name": "The One Correcting Hand Rule", "body": "Vermilion means a correction. Blue pencil means checked and cleared. No third marking colour is added, and neither hand borrows the other's job.", "section": "colors" },
+      { "name": "The Never-By-Colour Rule", "body": "Severity is encoded three ways simultaneously — filled steps out of four, a severity word, and an sr-only \"severity, N of 4\". This is a WCAG 2.2 AA obligation from PRODUCT.md, not a style. A severity display that survives grayscale printing and screen-reader-only consumption is the minimum; colour is the fourth, redundant channel.", "section": "colors" },
+      { "name": "The Keyline Rule", "body": "The stamp's vermilion fill is only 1.55:1 against marking blue, so on the field the stamp carries a 3px proof-stock keyline that does the separating. On proof stock the same block takes a 3px stamped-vermilion keyline instead. Both hovers invert fill and text without dropping below AA. Never ship the stamp on the field without its keyline.", "section": "colors" },
+      { "name": "The Two Voices Rule", "body": "Tinos speaks only for the document — clause text, clause numbers and headings, clause references, and the Redline signature in the field footer where it plays as a printer's mark. Archivo speaks only for the product. A line of product copy set in Tinos, or a quoted clause set in Archivo, is a bug.", "section": "typography" },
+      { "name": "The Tabular Figures Rule", "body": "Any string whose job is a number a reader might compare — clause numbers, sheet numbers, index ranks, masthead legends — carries font-variant-numeric: tabular-nums lining-nums via the .numeric class.", "section": "typography" },
+      { "name": "The Desktop Leader Rule", "body": "The vermilion leader rule that draws from a margin mark across the gutter to its sentence is rendered only at min-width: 1024px, and the measurement function returns null below that. This is deliberate, not a gap: below 1024px the two columns are stacked, so there is no gutter for a leader to cross and any drawn path would run over body text. Below 1024px the in-line mark carries the tie, and the mark plus the margin card are adjacent. Do not \"fix\" the leader's absence on narrow screens by drawing one anyway.", "section": "layout" },
+      { "name": "The Full-Bleed Sheet Rule", "body": "The proof stock runs edge to edge with no chrome above it. No navigation bar, no logo lockup, no browser frame. The first thing on the page is the sheet and its head.", "section": "layout" },
+      { "name": "The One Moment Rule", "body": "The leader rule is the only thing on this surface that animates for its own sake. A new surface gets state transitions and nothing else; if it needs a second authored moment, that is a system change, not a local decision.", "section": "elevation" },
+      { "name": "The Flat Rule", "body": "No box-shadow, no elevation, no blur, no glass. If two things need separating, use a rule, a material change, or opacity.", "section": "elevation" },
+      { "name": "The No Cards Rule", "body": "Nothing on this surface is a card. No container gets a background fill, a border on all four sides, and padding at the same time. Groupings are made by rules, measure and whitespace.", "section": "shapes" },
+      { "name": "The Paired Mark Rule", "body": "A finding is a mark in the line and a mark in the margin, carrying the same glyph, read together. One without the other is not a lighter version of this system; it is a broken one. Any future surface that shows findings must ship both halves, whatever the viewport.", "section": "components" }
+    ],
+    "dos": [
+      "Do ship both halves of every mark — in-line glyph and margin mark, same glyph, per The Paired Mark Rule.",
+      "Do encode severity three ways at once: filled steps out of four, the severity word, and an sr-only \"severity, N of 4\".",
+      "Do give the stamp its 3px keyline — proof stock on the blue field, stamped vermilion on proof stock — and keep both hover inversions at or above AA.",
+      "Do set anything quoted from a document in Tinos, and anything Redline says in Archivo.",
+      "Do separate with hairline rules, 2px ink rules, material change or opacity.",
+      "Do apply .numeric to clause numbers, ranks, sheet numbers and legends.",
+      "Do keep authored SVG proof marks at a single 2px stroke weight, currentColor, aria-hidden."
+    ],
+    "donts": [
+      "Don't add a box-shadow, a radius above 1px, or a card. This system is flat and square.",
+      "Don't let colour be the only carrier of severity, selection or state.",
+      "Don't use vermilion for anything that is not a correction, or blue pencil for anything that is not a cleared item.",
+      "Don't draw a leader rule below 1024px; the stacked layout has no gutter to cross and the in-line mark already carries the tie.",
+      "Don't add a second authored animation. One moment, 620ms, exponential ease-out, with prefers-reduced-motion honoured.",
+      "Don't put chrome above the sheet — no nav bar, no logo lockup, no browser frame.",
+      "Don't rely on font-synthesis for a weight that was not loaded; load it or don't use it."
+    ]
+  }
+}

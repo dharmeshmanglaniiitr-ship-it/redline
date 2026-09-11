@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+:root {
+  /* The marking desk: a deep, saturated correcting blue carries the page. */
+  --field: #16307f;
+  --field-deep: #0f2159;
+  --field-ink: #e9eae3;
+  --field-soft: #a9b6dc;
+
+  /* The galley: cool proof stock, never warm paper. */
+  --stock: #e9eae3;
+  --stock-shade: #dcded2;
+  --rule: #b7b9ac;
+
+  --ink: #14140f;
+  --ink-soft: #55554c;
+
+  /* Corrector's vermilion. Every mark, rule and caret on the page. */
+  --mark: #c8341f;
+  --mark-deep: #9d2614;
+
+  /* Blue pencil: the second marking hand, for what was checked and cleared. */
+  --pencil: #2b4c8c;
+
+  --measure: 66ch;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@theme inline {
+  --color-field: var(--field);
+  --color-field-deep: var(--field-deep);
+  --color-field-ink: var(--field-ink);
+  --color-field-soft: var(--field-soft);
+  --color-stock: var(--stock);
+  --color-stock-shade: var(--stock-shade);
+  --color-rule: var(--rule);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-mark: var(--mark);
+  --color-mark-deep: var(--mark-deep);
+  --color-pencil: var(--pencil);
+  --font-sans: var(--font-archivo);
+  --font-document: var(--font-tinos);
+}
+
+html {
+  background: var(--field);
+  color-scheme: dark;
+  scrollbar-color: var(--mark) var(--field-deep);
+}
+
+body {
+  background: var(--field);
+  color: var(--field-ink);
+  font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--mark);
+  color: var(--stock);
+}
+
+:focus-visible {
+  outline: 2px solid var(--mark);
+  outline-offset: 3px;
+  border-radius: 1px;
+}
+
+/* The galley sets its own selection: red pencil on proof stock. */
+.galley ::selection {
+  background: var(--mark);
+  color: var(--stock);
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* The one authored moment: the leader rule draws itself from mark to sentence. */
+.leader {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw-leader 620ms var(--ease-out) forwards;
+}
+
+@keyframes draw-leader {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+a {
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: from-font;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

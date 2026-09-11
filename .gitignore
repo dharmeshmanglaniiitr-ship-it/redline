@@ -53,3 +53,7 @@ Thumbs.db
 # Local env override files sometimes used for secrets
 .envrc
 secrets.json
+
+# Impeccable finish-review captures (regenerated each run)
+.impeccable/review/
+.impeccable/questions/
