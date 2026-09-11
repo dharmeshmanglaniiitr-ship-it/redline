@@ -39,6 +39,10 @@ misread.
   the moment it's pushed and has to be rotated.
 - Ask before adding a dependency.
 - Don't write application code until PRD.md exists.
+- All copy a user reads in this product, meaning the landing page, UI labels, error
+  messages and empty states, has to be run through the humanizer skill before it is
+  committed. Copy that reads as though a model wrote it is a defect, not a matter of
+  taste.
 
 ## Read before building
 - research/summary.md — the user research behind these decisions.

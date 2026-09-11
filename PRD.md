@@ -125,6 +125,13 @@ losses, or claims arising from your work — without any financial cap"
    (`docs/adr/0005`). How jurisdiction is determined — asked, detected, or both — is
    not yet designed, and is real undesigned scope.
 
+10. **Explains itself to someone who has not signed up yet.** A public landing page
+    stating what Redline does, what happens to an uploaded file, and what it is not.
+    This is the only surface a Signer sees before deciding whether to hand a
+    confidential client contract to a tool they have never used. Added after the nine
+    above were settled, and it expands the scope `CLAUDE.md` closed — see §6 for the
+    call and what it costs.
+
 Nothing beyond this list. If something looks like the obvious next step and is not on
 it, it gets asked about first, not built.
 
@@ -175,6 +182,15 @@ failed.
 Editing the signer's red lines must measurably change the ranking on the same
 document. If the output is identical before and after, the red-lines feature is
 decorative.
+
+**8. The landing page claims nothing the product cannot show.**
+No invented customers, testimonials, benchmarks, usage numbers, or pricing — none of
+these exist (§8). Any analysis output depicted on the page is either produced by the
+real system or labelled as an illustration; a mocked-up flag presented as real output
+would be the product breaking its own central rule in the first thing a visitor reads.
+Testable by review against `PRODUCT.md`'s Evidence on Hand: every factual claim traces
+to a sourced fact or to something the product demonstrably does. This is test 1 turned
+on the product's own marketing — state only what you can show.
 
 **What is not yet defined:** the trigger for when the product hedges rather than
 states plainly. `docs/adr/0004` commits to hedging only when genuinely uncertain but
@@ -295,6 +311,19 @@ CLAUDE.md's committed scope and was confirmed deliberately after being pushed ba
 twice. It is the largest scope decision in the brief and the one most likely to be
 worth revisiting if v1 runs long.
 
+**A public landing page, not the signed-in product alone.**
+Chose against shipping only the thing v1 exists to prove. **Worse off:** the analysis,
+in timing — v1 grows by a surface that demonstrates nothing about whether the flags are
+correct, and every hour spent on it is an hour not spent on the citation and severity
+work that carries the product's claim. The reasoning is that the first thing Redline
+asks a Signer to do is hand over a confidential client contract, and nothing currently
+tells them what happens to it beforehand. The strongest fact the product has — the file
+is parsed in the browser and never stored — is invisible until someone has already
+decided to trust it. That is a trust problem sitting in front of a product whose entire
+purpose is to be trustworthy. This is the second expansion of `CLAUDE.md`'s closed
+scope, after jurisdiction, and the same caution applies: it was asked for and confirmed,
+not assumed.
+
 ---
 
 ## 7. What we are not building, and why
@@ -324,6 +353,20 @@ the service that way
 (https://www.abajournal.com/news/article/robot-lawyer-website-donotpay-settles-ftc-claims-it-couldnt-deliver-on-promises).
 Redline's counter-offer and Q&A features sit closest to that line. The product
 explains a document and drafts language; it does not advise on whether to sign.
+
+Note what DoNotPay was actually sanctioned for: *marketing*. The claim, not the code.
+That makes the landing page — now in scope per §3 item 10 — the single highest-risk
+surface in v1 for this specific failure, not a low-stakes one.
+
+**Marketing claims the product cannot support.** No pricing, testimonials, customer
+logos, usage figures, accuracy percentages, or "trusted by" proof of any kind. None of
+these exist, and §8 records exactly how thin the evidence base is. A landing page that
+manufactures them would be the same defect as a flag without a source sentence, in the
+first thing a visitor reads.
+
+**A waitlist, blog, pricing page, or any second marketing surface.** One page. The
+landing page is in scope because a Signer needs to know what happens to their file
+before they upload it, not because v1 has a marketing programme.
 
 ---
 
