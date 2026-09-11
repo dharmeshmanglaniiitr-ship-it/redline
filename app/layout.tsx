@@ -16,10 +16,29 @@ const tinos = Tinos({
   display: "swap",
 });
 
+const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : "http://localhost:3000";
+
+const description =
+  "Redline reads a contract a client sent you and shows you the terms that will cost you, each one quoting the sentence it came from.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "Redline",
-  description:
-    "Redline reads a contract a client sent you and shows you the terms that will cost you, each one quoting the sentence it came from.",
+  description,
+  openGraph: {
+    title: "Redline",
+    description,
+    url: "/",
+    siteName: "Redline",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Redline",
+    description,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
