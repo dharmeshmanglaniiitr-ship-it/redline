@@ -32,5 +32,6 @@ scope list.
 - The severity model (ADR 0003) now needs a jurisdiction input, not just clause-text
   analysis — how jurisdiction is determined (asked of the user, detected from document
   language, or both) is not yet designed and is real, undesigned scope, not a detail.
+  Settled in ADR 0007.
 - This is a meaningfully larger v1 than "prove the analysis works in one legal
   framework first" would have been — accepted deliberately, not by default.

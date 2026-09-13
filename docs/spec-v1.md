@@ -1,6 +1,6 @@
 # Spec: Redline v1
 
-Source: `PRD.md`. Decisions: `docs/adr/0001`–`0005`. Vocabulary: `CONTEXT.md`
+Source: `PRD.md`. Decisions: `docs/adr/0001`–`0007`. Vocabulary: `CONTEXT.md`
 (**Signer**, **Sender**, **Leverage** are used here as defined there).
 
 Covers all ten v1 capabilities in one document. Not published to an issue tracker —
@@ -148,10 +148,14 @@ claim that can be true or false.
 and severity of flags rather than hiding rows from a fixed result. A red-lines
 implementation that filters output would satisfy the UI but not story 23.
 
-**Jurisdiction is an explicit input, never silently defaulted.** When it isn't known
-it must be surfaced to the Signer rather than assumed to be US (ADR 0005). Legal
-claims that depend on jurisdiction — enforceability in particular — are stated
-relative to it, not as universal fact.
+**Jurisdiction is an explicit input, never silently defaulted.** It is detected from
+the document's own governing-law clause, carrying that clause as its source sentence;
+the Signer's explicit choice overrides detection; and when neither is available it is
+`undetermined` rather than assumed to be US (ADR 0005, ADR 0007). An undetermined
+jurisdiction does not stop the analysis — severity still derives from the clause's
+wording — but the jurisdiction-dependent claims ADR 0007 enumerates are withheld and
+stated as depending on law the contract doesn't name. Those claims are always stated
+relative to the governing jurisdiction, never as universal fact.
 
 **Only extracted text is stored, never the original file** (`CLAUDE.md`). Per-Signer
 isolation is enforced with Supabase Row Level Security so no query can return another
@@ -188,10 +192,13 @@ its source sentence reachable by keyboard (`PRODUCT.md`). On the landing page th
 matters for story 34 specifically: a demonstration of checkability that a screen reader
 user cannot follow is not a demonstration.
 
-**Blocker before implementation:** the trigger for when the product hedges rather than
-states plainly is undefined (`PRD.md` §4, ADR 0004). Left undefined, hedging becomes
-the default and the output becomes safe and useless. This needs a checkable definition
-before the analysis is built, not after.
+**Hedging has a structural trigger, not a judgment call.** A finding is hedged if and
+only if at least one property its severity function consumed was not stated in the
+document, and the hedge names that property (ADR 0006). Everything else is stated
+plainly. Hedging never lowers severity, never suppresses a flag, and is never applied
+to the document as a whole. This is what unblocks the analysis work: the invariant
+`hedged === (unstatedProperties.length > 0)` is assertable at the seam, which requires
+the analysis to return per-property provenance alongside severity.
 
 ## Testing Decisions
 
@@ -276,11 +283,11 @@ upload it, not because v1 has a marketing programme.
 
 **Open questions carried in from the brief.**
 
-- The hedging trigger is undefined (see Implementation Decisions). This blocks the
-  analysis work.
-- How jurisdiction is determined — asked of the Signer, detected from the document, or
-  both — is undesigned. `PRD.md` calls this real undesigned scope, and ADR 0005 accepts
-  it deliberately as the largest scope decision in v1.
+Two questions this spec originally carried as open have since been settled and are
+recorded here only so nobody goes looking for them: the hedging trigger is ADR 0006,
+and how jurisdiction is determined is ADR 0007. Both are folded into Implementation
+Decisions above. What remains open:
+
 - Story 28 assumes a saved document shows the analysis as stored. Stored analyses and
   current model output will diverge as prompts change. Whether a returning Signer sees
   the stored analysis, a re-run, or both is not decided.

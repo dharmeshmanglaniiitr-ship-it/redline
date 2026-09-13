@@ -31,8 +31,8 @@ Filled in as tickets complete. See each ticket's own `Status:` line for detail.
 | # | Ticket | Status |
 |---|--------|--------|
 | 01 | Project scaffold and first deploy | pending |
-| 02 | Settle the hedging trigger | pending |
-| 03 | Settle how jurisdiction is determined | pending |
+| 02 | Settle the hedging trigger | done — ADR 0006 |
+| 03 | Settle how jurisdiction is determined | done — ADR 0007 |
 | 04 | Browser text extraction | pending |
 | 05 | Sign-in and per-Signer isolation | pending |
 | 06 | Fixture corpus and test harness | pending |

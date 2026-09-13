@@ -1,6 +1,6 @@
 # Redline — Product Brief (v1)
 
-Decisions behind this brief live in `docs/adr/0001`–`0005`. Vocabulary is in
+Decisions behind this brief live in `docs/adr/0001`–`0007`. Vocabulary is in
 `CONTEXT.md`. The research it draws on is in `research/summary.md` and the four
 files it summarizes. Where this brief makes a claim the research does not support,
 it says so.
@@ -122,8 +122,10 @@ losses, or claims arising from your work — without any financial cap"
 8. **Saves past documents to a library** the signer can return to.
 9. **Accounts for the document's governing jurisdiction** in severity and
    enforceability claims, rather than asserting US-law assumptions as universal
-   (`docs/adr/0005`). How jurisdiction is determined — asked, detected, or both — is
-   not yet designed, and is real undesigned scope.
+   (`docs/adr/0005`). Jurisdiction is detected from the document's own governing-law
+   clause, overridden by the Signer whenever they say otherwise, and left
+   `undetermined` rather than defaulted to US law when neither is available
+   (`docs/adr/0007`).
 
 10. **Explains itself to someone who has not signed up yet.** A public landing page
     stating what Redline does, what happens to an uploaded file, and what it is not.
@@ -192,10 +194,12 @@ Testable by review against `PRODUCT.md`'s Evidence on Hand: every factual claim 
 to a sourced fact or to something the product demonstrably does. This is test 1 turned
 on the product's own marketing — state only what you can show.
 
-**What is not yet defined:** the trigger for when the product hedges rather than
-states plainly. `docs/adr/0004` commits to hedging only when genuinely uncertain but
-does not define the threshold. Left loose, hedging becomes the default and the output
-becomes safe and useless. This needs a checkable definition before implementation.
+**When the product hedges:** `docs/adr/0006` settles the trigger `docs/adr/0004` left
+open. Redline hedges a finding exactly when at least one of the properties its severity
+function consumed is not stated in the document, and the hedge has to name the missing
+property. Every other finding is stated plainly. Because the properties are enumerated
+per clause type (§5), this is checkable against a specific finding rather than judged by
+feel, and it does not depend on the model reporting its own confidence.
 
 ---
 
@@ -230,7 +234,8 @@ High when duration exceeds roughly 6–12 months, when scope is industry-wide or
 geographically broad, or when there is no separate compensation for the restriction.
 A narrow, short, compensated restriction is common and ranks lower. Note that
 enforceability reasoning here is jurisdiction-dependent and must not be stated as
-universal (`docs/adr/0005`).
+universal (`docs/adr/0005`, and `docs/adr/0007` for the list of claims that rule
+covers).
 
 ### In the checklist, thresholds not yet set
 
@@ -296,8 +301,9 @@ checkable and self-correcting in a way a false negative never is.
 **Hedge when genuinely uncertain, rather than always sounding confident.**
 Chose against maximum decisiveness. **Worse off:** the signer who wanted a clear answer
 and gets "this may be concerning." This call was made against the recommendation, and
-its risk is named in §4: with no defined trigger, hedging drifts toward the default and
-the product becomes safe and useless — the exact failure it was chosen to avoid.
+the risk it carried — hedging drifting toward the default until the product is safe and
+useless — is now closed off by `docs/adr/0006`, which ties hedging to a named property
+the document does not state and forbids a hedge that cannot say what is missing.
 
 **A specific clean bill, not a short all-clear.**
 Chose against brevity. **Worse off:** nobody meaningfully; the cost is output length
@@ -309,7 +315,9 @@ generalizing. **Worse off:** everyone, in timing — v1 ships later, and the cor
 analysis stays unproven while jurisdiction handling gets built. This expanded
 CLAUDE.md's committed scope and was confirmed deliberately after being pushed back on
 twice. It is the largest scope decision in the brief and the one most likely to be
-worth revisiting if v1 runs long.
+worth revisiting if v1 runs long. How jurisdiction is determined, which ADR 0005 left
+undesigned, is settled in `docs/adr/0007`: detected from the governing-law clause,
+overridden by the Signer, `undetermined` when neither is available.
 
 **A public landing page, not the signed-in product alone.**
 Chose against shipping only the thing v1 exists to prove. **Worse off:** the analysis,

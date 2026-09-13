@@ -12,15 +12,17 @@ gates the ticket that surfaces jurisdiction in the product.
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done — 2026-09-13, settled by `docs/adr/0007`: detected from the document's
+governing-law clause, overridden by the Signer whenever they say otherwise, and
+`undetermined` rather than US when neither is available.
 
-- [ ] The decision states whether jurisdiction is asked, detected, or both, and if both,
+- [x] The decision states whether jurisdiction is asked, detected, or both, and if both,
       which wins when they disagree
-- [ ] The behaviour when jurisdiction cannot be determined is defined — and it is not
+- [x] The behaviour when jurisdiction cannot be determined is defined — and it is not
       a silent default to US law
-- [ ] The decision covers what the Signer is shown about the assumed jurisdiction and
+- [x] The decision covers what the Signer is shown about the assumed jurisdiction and
       how they correct it
-- [ ] The decision names which kinds of claim are jurisdiction-dependent, so the
+- [x] The decision names which kinds of claim are jurisdiction-dependent, so the
       analysis knows what must be stated relative to jurisdiction rather than as fact
-- [ ] The decision is recorded as an ADR alongside the existing ones, following their
+- [x] The decision is recorded as an ADR alongside the existing ones, following their
       Decision / Alternatives / Why / Consequences shape

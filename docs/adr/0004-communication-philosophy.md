@@ -37,7 +37,7 @@ check, not just something they have to trust.
 - "Genuinely uncertain" is not yet a defined trigger. Left as-is, it risks becoming a
   default hedge that undermines the same trust it's meant to protect. This needs a
   concrete, checkable definition before implementation — not resolved by this decision
-  alone.
+  alone. Settled in ADR 0006.
 - Redline must maintain and report against a defined checklist of clause categories
   per document type, so "checked and came back clean" is a real claim, not a
   reformulated generic pass.

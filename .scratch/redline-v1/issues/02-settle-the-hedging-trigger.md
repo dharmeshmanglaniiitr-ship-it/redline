@@ -13,16 +13,18 @@ settled anything.
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done — 2026-09-13, settled by `docs/adr/0006`: Redline hedges a finding if
+and only if a severity-determining property it consumed is unstated in the document,
+and the hedge names that property.
 
-- [ ] The condition under which Redline hedges is stated in terms someone can check
+- [x] The condition under which Redline hedges is stated in terms someone can check
       against a specific finding, not in terms of the model's self-reported confidence
       alone
-- [ ] The definition distinguishes hedging about an interpretation from hedging about a
+- [x] The definition distinguishes hedging about an interpretation from hedging about a
       jurisdiction-dependent legal claim, which ADR 0005 already handles separately
-- [ ] Worked examples exist on both sides of the line: findings that should be stated
+- [x] Worked examples exist on both sides of the line: findings that should be stated
       plainly and findings that should be hedged
-- [ ] The decision is recorded as an ADR alongside the existing ones, following their
+- [x] The decision is recorded as an ADR alongside the existing ones, following their
       Decision / Alternatives / Why / Consequences shape
-- [ ] `PRD.md` §4 and the spec's Implementation Decisions no longer describe this as
+- [x] `PRD.md` §4 and the spec's Implementation Decisions no longer describe this as
       undefined

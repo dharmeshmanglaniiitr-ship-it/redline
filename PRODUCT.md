@@ -114,12 +114,15 @@ Credentials stay in a gitignored environment file.
 consistently in the product and the repository. Avoid "user", "counterparty", and
 "bargaining power".
 
-**Explicitly undecided.** The trigger for when Redline hedges rather than states plainly
-is undefined, and blocks the analysis work. How the governing jurisdiction is determined —
-asked of the Signer, detected from the document, or both — is undesigned. Severity
-thresholds for one-sided indemnity, uncapped liability, auto-renewal, and unilateral rate
-or scope change are unsettled. Whether a returning Signer sees a stored analysis or a
-fresh re-run is not decided.
+**Settled since this was written.** Redline hedges a finding exactly when one of the
+properties its severity judgment relied on is not stated in the document, and the hedge
+names that property (`docs/adr/0006`). The governing jurisdiction is detected from the
+document's own governing-law clause, overridden whenever the Signer says otherwise, and
+left undetermined rather than defaulted to US law (`docs/adr/0007`).
+
+**Explicitly undecided.** Severity thresholds for one-sided indemnity, uncapped
+liability, auto-renewal, and unilateral rate or scope change are unsettled. Whether a
+returning Signer sees a stored analysis or a fresh re-run is not decided.
 
 **Out of scope on purpose:** payments and billing, sharing a document between Signers,
 version diffing between drafts, and anything positioned as a substitute for a lawyer.
@@ -132,7 +135,8 @@ The name is **Redline**. No logo, wordmark, or brand assets exist yet.
 in confident plain language rather than hedged legal register. This follows from the
 product's own decisions — it over-flags rather than stays quiet, and it gives a specific
 clean bill rather than a vague all-clear, both of which require a product willing to say
-something. It hedges only when its confidence in an interpretation is genuinely low.
+something. It hedges only where the contract leaves out something its judgment depended
+on, and then it says which thing (`docs/adr/0006`).
 
 The voice has a hard edge it must not cross. Having a point of view about a clause is not
 the same as advising whether to sign, and the two are easy to blur in exactly the places
