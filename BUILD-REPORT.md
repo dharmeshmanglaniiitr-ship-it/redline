@@ -36,7 +36,7 @@ Filled in as tickets complete. See each ticket's own `Status:` line for detail.
 | 04 | Browser text extraction | done |
 | 05 | Sign-in and per-Signer isolation | 5/7 — blocked on a database |
 | 06 | Fixture corpus and test harness | done |
-| 07 | Analysis seam — plain-English summary | pending |
+| 07 | Analysis seam — plain-English summary | done (live model unreached) |
 | 08 | Risk flags — verified citations, derived severity | pending |
 | 09 | The checked-clean list | pending |
 | 10 | Settle remaining checklist thresholds | pending |
@@ -280,9 +280,60 @@ not a substitute for running the isolation test.
 three `SUPABASE_TEST_*` variables, and run `npm test`. Until that test runs green, treat
 per-Signer isolation as designed rather than delivered.
 
+### D18 — `AnalysisResult` is the shape five later tickets inherit
+
+Built now so 08, 09, 11, 13 and 14 extend it rather than reshape it. Two parts of it are
+structural rather than conventional, which is the point:
+
+- **`sourceSentence` is a required field on a flag.** ADR 0001 says an unsourced flag must
+  be unrepresentable, so it is not an optional annotation someone can forget.
+- **`RiskFlag` is a union distributed over clause type.** `unstatedProperties` on a
+  payment-approval flag cannot contain `"durationMonths"`, because that is not one of the
+  properties payment approval's severity function consumes. ADR 0006's rule that a hedge
+  may only name a property the severity function actually used is therefore a compile
+  error, not a rule someone has to remember.
+
+`flags` and `checkedClean` come back as empty arrays this ticket. An empty array is the
+honest answer to "no flag detection has been built yet"; a fabricated flag would not be.
+The screen says so explicitly, because a summary with nothing after it reads as a clean
+bill, which is the failure the spec cares most about.
+
+`counterOffer` is nullable because ticket 08 ships flags before ticket 11 ships
+counter-offers. Null means "not drafted", never a placeholder.
+
 ---
 
 ## Could not be verified in this run
+
+- **The live model was never reached.** This is the one thing in step 7 I could not do, and
+  the key is not the problem — it works.
+
+  Every call to the pinned provider returns **HTTP 429**: *"temporarily rate-limited
+  upstream… limit_source: upstream_provider_shared_pool, is_byok: false"*. The subagent
+  retried 25 times across about 32 minutes; I then confirmed it independently with my own
+  single request. What this tells us is quite specific, because the failure is not a 401 or
+  a 404:
+  - authentication works
+  - the request routes to the pinned Fireworks provider correctly
+  - the request is priced correctly (an earlier attempt returned a 402 naming the token
+    budget, which is why `max_tokens: 4096` is now set — without it the request reserves
+    the model's whole completion window and is refused outright)
+
+  So the integration is proven right up to the provider boundary. What remains unproven is
+  the **structured-output response path**: whether the model returns JSON matching the
+  schema, and whether `ResponseSchema.parse` accepts it. That path is exercised against the
+  fixture stub only.
+
+  **The remedy, in your hands:** the account is using OpenRouter's shared Fireworks pool.
+  Adding your own Fireworks key at `https://openrouter.ai/settings/integrations` moves you
+  off the shared limit. I did **not** set `allow_fallbacks: true` or route to another
+  provider, because you pinned the provider deliberately and told me not to invent a way
+  around a blocker.
+
+  Until one real call succeeds, treat every claim about live model behaviour in this build
+  as untested. The seam's shape, its error handling and its refusal to invent a Sender are
+  all tested; what the model actually returns is not.
+
 
 - **Row Level Security.** No Supabase project exists, so the policies in
   `supabase/migrations/` are unrun and untested. The isolation claim in `CLAUDE.md` is

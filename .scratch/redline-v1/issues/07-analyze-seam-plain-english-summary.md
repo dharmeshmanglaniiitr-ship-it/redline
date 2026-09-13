@@ -16,15 +16,19 @@ so its shape should anticipate them rather than be widened later.
 
 **Blocked by:** 01, 04
 
-**Status:** ready-for-agent
+**Status:** done — 2026-09-13, with one caveat. The seam, the real OpenRouter client and
+the screen are built and tested against the fixture stub. The live model was never reached:
+every call returns HTTP 429 from the pinned provider's shared pool. Authentication, routing
+and pricing are all confirmed working, so the structured-output response path is the only
+part unproven live. See BUILD-REPORT.md.
 
-- [ ] A Signer can go from picking a file to reading a summary of it
-- [ ] The summary names the Sender and identifies the engagement the contract covers, so
+- [x] A Signer can go from picking a file to reading a summary of it
+- [x] The summary names the Sender and identifies the engagement the contract covers, so
       a Signer can confirm they are looking at the right document
-- [ ] The summary is in plain English, not restated legal language
-- [ ] The analysis is callable as a function of document text, exercisable in a test with
+- [x] The summary is in plain English, not restated legal language
+- [x] The analysis is callable as a function of document text, exercisable in a test with
       no browser and no UI
-- [ ] Model calls go through OpenRouter, with the key in the gitignored environment file
-- [ ] The result shape anticipates flags, the checked-clean list and counter-offers
+- [x] Model calls go through OpenRouter, with the key in the gitignored environment file
+- [x] The result shape anticipates flags, the checked-clean list and counter-offers
       rather than being summary-only
-- [ ] The OpenRouter dependency was asked about before being added (`CLAUDE.md`)
+- [x] The OpenRouter dependency was asked about before being added (`CLAUDE.md`)

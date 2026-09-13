@@ -4,8 +4,11 @@ import { useEffect, useRef, useState } from "react";
 
 import { readPastedText } from "@/lib/document/extract";
 import type { ExtractionResult, UnreadableReason } from "@/lib/document/extraction";
+import type { ExtractedDocument } from "@/lib/supabase/documents";
 
 import { GalleyFoot, LABEL, Masthead, ProofMark, STAMP } from "../_components/galley";
+import { explainDocument } from "./actions";
+import { NOT_ASKED, type AnalysisState } from "./analysis-state";
 import { KeepInLibrary } from "./keep-in-library";
 import { readFileInBrowser } from "./read-in-browser";
 
@@ -62,6 +65,7 @@ const UNREADABLE: Record<UnreadableReason, { headline: string; explanation: stri
 
 export default function ReviewPage() {
   const [screen, setScreen] = useState<Screen>({ phase: "waiting" });
+  const [analysis, setAnalysis] = useState<AnalysisState>(NOT_ASKED);
   const [pasted, setPasted] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const head = useRef<HTMLHeadingElement>(null);
@@ -72,17 +76,41 @@ export default function ReviewPage() {
     if (screen.phase === "done") head.current?.focus();
   }, [screen]);
 
+  /**
+   * A document that was read is explained without being asked for again: a Signer came
+   * to find out what they would be agreeing to, not to press a second button. Only the
+   * extracted arm has text to send, so an unreadable file cannot reach the analysis.
+   */
+  async function explain(document: ExtractedDocument) {
+    setAnalysis({ status: "working" });
+    setAnalysis(
+      await explainDocument({
+        name: document.name,
+        format: document.format,
+        text: document.text,
+      })
+    );
+  }
+
+  function show(result: ExtractionResult) {
+    setScreen({ phase: "done", result });
+    if (result.outcome === "extracted") void explain(result);
+  }
+
   async function readFile(file: File) {
+    setAnalysis(NOT_ASKED);
     setScreen({ phase: "reading", name: file.name });
-    setScreen({ phase: "done", result: await readFileInBrowser(file) });
+    show(await readFileInBrowser(file));
   }
 
   function readPaste() {
-    setScreen({ phase: "done", result: readPastedText(PASTED, pasted) });
+    setAnalysis(NOT_ASKED);
+    show(readPastedText(PASTED, pasted));
   }
 
   function startOver() {
     setPasted("");
+    setAnalysis(NOT_ASKED);
     setScreen({ phase: "waiting" });
   }
 
@@ -94,7 +122,7 @@ export default function ReviewPage() {
     <>
       <Masthead
         document={documentLine(screen)}
-        state={stateLine(screen)}
+        state={stateLine(screen, analysis)}
         alarmed={result?.outcome === "unreadable"}
       />
 
@@ -123,15 +151,16 @@ export default function ReviewPage() {
         {unreadable
           ? unreadable.explanation
           : extracted
-            ? "This is the wording Redline will work from. Check it against your own copy. " +
-              "The file itself stayed on your machine; only this text goes any further."
+            ? "Below is what the contract commits you to, and under that the wording " +
+              "Redline read. Check that wording against your own copy. The file itself " +
+              "stayed on your machine; only this text goes any further."
             : "Choose the file your client sent, or paste the wording straight in. Either " +
               "way it is read here in your browser. The file never leaves your machine."}
       </p>
 
       {/* The state of the read, for anyone who is not watching the sheet change. */}
       <p role="status" aria-live="polite" className="sr-only">
-        {liveStatus(screen)}
+        {liveStatus(screen, analysis)}
       </p>
 
       {result?.outcome === "unreadable" && result.foundText !== "" && (
@@ -207,6 +236,101 @@ export default function ReviewPage() {
         </section>
       )}
 
+      {/* Nothing stands under this heading until the reading has started, so the section
+          arrives with the first thing it has to say rather than as an empty frame. */}
+      {extracted && analysis.status !== "not-asked" && (
+        <section aria-labelledby="what-it-commits-you-to" className="mt-12">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-3 border-t border-rule pt-6">
+            <h2 id="what-it-commits-you-to" className={LABEL}>
+              What this commits you to
+            </h2>
+            <span className="numeric text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-ink-soft">
+              {analysisLegend(analysis)}
+            </span>
+          </div>
+
+          {analysis.status === "working" && (
+            <p className="mt-7 max-w-[58ch] text-[1.05rem] leading-[1.5] text-ink-soft">
+              Redline is reading it now. This takes a few seconds on a long contract.
+            </p>
+          )}
+
+          {analysis.status === "explained" && (
+            <>
+              <div className="mt-7 max-w-[58ch] space-y-6">
+                <div>
+                  <h3 className={LABEL}>Sent by</h3>
+                  {/* The Sender's name is the document's own words, so it is set in the
+                      document's face and not in Redline's (`DESIGN.md`). */}
+                  <p className="mt-2 font-document text-[1.06rem] leading-[1.4] text-ink">
+                    {analysis.result.summary.sender}
+                  </p>
+                </div>
+                <div>
+                  <h3 className={LABEL}>The work</h3>
+                  <p className="mt-2 text-[1.05rem] leading-[1.5] text-ink">
+                    {analysis.result.summary.engagement}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-8 max-w-[58ch] space-y-5 border-t border-rule pt-7 text-[1.05rem] leading-[1.5] text-ink">
+                {analysis.result.summary.plainEnglish
+                  .split(/\n{2,}/)
+                  .map((paragraph) => paragraph.trim())
+                  .filter((paragraph) => paragraph !== "")
+                  .map((paragraph, index) => (
+                    <p key={index}>{paragraph}</p>
+                  ))}
+              </div>
+
+              {/* The query mark, because this is the thing left unresolved. A summary
+                  with nothing after it would read as a contract with nothing wrong in
+                  it, which is the worst thing this product could say
+                  (`docs/spec-v1.md`), so what has not been done is said here. */}
+              <div className="mt-9 flex max-w-[58ch] items-start gap-3 border-t border-rule pt-5">
+                <ProofMark kind="query" className="mt-0.5 h-5 w-5 text-mark" />
+                <p className="text-[0.94rem] leading-[1.55] text-ink-soft">
+                  Redline has not looked for risky terms yet. What is above is an account
+                  of what the contract says, so it is no sign that the contract is fair to
+                  you.
+                  {analysis.result.jurisdiction.source === "undetermined" &&
+                    " It has also not worked out which law governs this agreement. Nothing above depends on that."}
+                </p>
+              </div>
+            </>
+          )}
+
+          {(analysis.status === "model-not-set-up" ||
+            analysis.status === "nothing-to-read" ||
+            analysis.status === "failed") && (
+            <div role="alert" className="mt-7 max-w-[58ch]">
+              <p className="flex items-start gap-3 text-[1.05rem] leading-[1.5] text-mark-deep">
+                <ProofMark kind="query" className="mt-1 h-5 w-5" />
+                <span>
+                  {analysis.status === "model-not-set-up"
+                    ? "Redline has no model to call on this deployment, so it read your " +
+                      "document but cannot explain it. The wording is below, as it came " +
+                      "out of the file."
+                    : analysis.status === "nothing-to-read"
+                      ? "There was not enough text here for Redline to work from."
+                      : analysis.message}
+                </span>
+              </p>
+              {analysis.status === "failed" && (
+                <button
+                  type="button"
+                  className={`${STAMP} mt-6`}
+                  onClick={() => void explain(extracted)}
+                >
+                  Try again
+                </button>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
       {extracted && (
         <section aria-labelledby="the-text" className="mt-12">
           <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-3 border-t border-rule pt-6">
@@ -253,11 +377,40 @@ function documentLine(screen: Screen): string {
   return screen.result.name;
 }
 
-function stateLine(screen: Screen): string {
+function stateLine(screen: Screen, analysis: AnalysisState): string {
   if (screen.phase === "waiting") return "Nothing read yet";
   if (screen.phase === "reading") return "Reading";
   if (screen.result.outcome === "unreadable") return "Cannot be read";
-  return `${screen.result.sentences.length} sentences read`;
+
+  const read = `${screen.result.sentences.length} sentences read`;
+  switch (analysis.status) {
+    case "not-asked":
+      return read;
+    case "working":
+      return `${read} · working through it`;
+    case "explained":
+      return `${read} · summary below`;
+    default:
+      return `${read} · no summary`;
+  }
+}
+
+/** The legend beside the summary's own heading, saying where the reading has got to. */
+function analysisLegend(analysis: AnalysisState): string {
+  switch (analysis.status) {
+    case "not-asked":
+      return "";
+    case "working":
+      return "Reading";
+    case "explained":
+      return "Read once, by a model";
+    case "model-not-set-up":
+      return "Not switched on here";
+    case "nothing-to-read":
+      return "Nothing to read";
+    case "failed":
+      return "Did not come back";
+  }
 }
 
 function footState(screen: Screen): string {
@@ -265,11 +418,26 @@ function footState(screen: Screen): string {
   return screen.result.outcome === "extracted" ? "Sheet 1 of 1" : "Nothing to mark";
 }
 
-function liveStatus(screen: Screen): string {
+function liveStatus(screen: Screen, analysis: AnalysisState): string {
   if (screen.phase === "waiting") return "";
   if (screen.phase === "reading") return `Reading ${screen.name}.`;
   if (screen.result.outcome === "unreadable") {
     return `${screen.result.name} could not be read. ${UNREADABLE[screen.result.reason].headline}`;
   }
-  return `${screen.result.name} read. ${screen.result.sentences.length} sentences.`;
+
+  const read = `${screen.result.name} read. ${screen.result.sentences.length} sentences.`;
+  switch (analysis.status) {
+    case "not-asked":
+      return read;
+    case "working":
+      return `${read} Working out what it commits you to.`;
+    case "explained":
+      return `${read} A summary of what it commits you to is below.`;
+    case "model-not-set-up":
+      return `${read} Redline cannot explain it on this deployment.`;
+    case "nothing-to-read":
+      return `${read} There was not enough text in it to explain.`;
+    case "failed":
+      return `${read} The explanation did not come back.`;
+  }
 }

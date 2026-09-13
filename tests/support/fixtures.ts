@@ -12,63 +12,39 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import {
+  CHECKLIST_ENTRIES,
+  SETTLED_CLAUSE_TYPES,
+  SEVERITY_PROPERTIES as CONSUMED_PROPERTIES,
+  type ChecklistEntry,
+  type ClauseType,
+} from "@/lib/analysis/clauses";
+import type { Severity } from "@/lib/analysis/result";
 import { splitIntoSentences } from "@/lib/text/sentences";
 
 const FIXTURE_DIR = fileURLToPath(new URL("../fixtures/", import.meta.url));
 
 /**
- * Severity is an integer 1-4, because `DESIGN.md`'s meter is four cells and announces
- * "severity, N of 4". 4 is subjective payment approval, 3 IP reaching beyond the
- * deliverable and a long/broad/uncompensated restriction, 2 termination for convenience
- * with no kill fee, 1 present but standard.
+ * The clause vocabulary the corpus is written in is the analysis's own
+ * (`lib/analysis/clauses.ts`), passed straight through here so a test reads it from one
+ * import and a sidecar cannot record a property the analysis does not consume. A second
+ * copy kept here would drift, and the sidecars would go on validating against a list
+ * nothing uses.
  */
-export type Severity = 1 | 2 | 3 | 4;
+export { CHECKLIST_ENTRIES, SETTLED_CLAUSE_TYPES };
+export type { ChecklistEntry, ClauseType, Severity };
 
 export const SEVERITIES: readonly Severity[] = [1, 2, 3, 4];
 
 /**
- * The clause checklist for freelance contracts. "Checked and came back clean" is only a
- * real claim against a real list (`docs/adr/0004`), so the list is data.
+ * The properties each clause type's severity function consumes, widened to plain strings
+ * so a sidecar's arbitrary key can be checked against them. A finding is hedged if and
+ * only if one of its type's properties was not stated in the document
+ * (`docs/adr/0006`), so this list is what `unstatedProperties` is checked against — a
+ * hedge can only name a property that appears here.
  */
-export const CHECKLIST_ENTRIES = [
-  "payment-approval",
-  "ip-assignment",
-  "non-compete",
-  "termination-for-convenience",
-  "one-sided-indemnity",
-  "uncapped-liability",
-  "auto-renewal",
-  "unilateral-change",
-] as const;
-
-export type ChecklistEntry = (typeof CHECKLIST_ENTRIES)[number];
-
-/**
- * The four clause types whose dangerous-vs-standard thresholds `PRD.md` §5 settles. The
- * other four checklist entries are checked but have no settled severity rule yet
- * (`docs/spec-v1.md`, Out of Scope), so nothing in the corpus plants one.
- */
-export const SETTLED_CLAUSE_TYPES = [
-  "payment-approval",
-  "ip-assignment",
-  "non-compete",
-  "termination-for-convenience",
-] as const;
-
-export type ClauseType = (typeof SETTLED_CLAUSE_TYPES)[number];
-
-/**
- * The properties each clause type's severity function consumes, enumerated per
- * `docs/adr/0006`. A finding is hedged if and only if one of its type's properties was
- * not stated in the document, so this list is what `unstatedProperties` is checked
- * against — a hedge can only name a property that appears here.
- */
-export const SEVERITY_PROPERTIES: Readonly<Record<ClauseType, readonly string[]>> = {
-  "payment-approval": ["acceptanceStandard"],
-  "ip-assignment": ["reachesBeyondDeliverable"],
-  "non-compete": ["durationMonths", "geographicScope", "industryScope", "compensated"],
-  "termination-for-convenience": ["killFee"],
-};
+export const SEVERITY_PROPERTIES: Readonly<Record<ClauseType, readonly string[]>> =
+  CONSUMED_PROPERTIES;
 
 /** One clause planted in a fixture, with the expectation tests assert against. */
 export interface PlantedClause {
