@@ -11,13 +11,22 @@ so the test setup must be able to exercise them without a browser or a network.
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** ready-for-agent — partially done. The scaffold, Tailwind and the Vercel
+deploy already exist and were verified on 2026-09-13. **Do not re-scaffold the
+application and do not touch `app/page.tsx`.** The only outstanding work is the test
+runner: install one that runs without a browser or a network, add an `npm test` script,
+and land a trivial passing test. Then this ticket is done.
 
-- [ ] The application builds and runs locally with no errors
-- [ ] A page is reachable at a live Vercel URL
-- [ ] Tailwind is applied and demonstrably working on that page
+- [x] The application builds and runs locally with no errors — `npm run build` and
+      `npx tsc --noEmit` both pass (2026-09-13)
+- [x] A page is reachable at a live Vercel URL — deploys on every push to master.
+      Vercel Deployment Protection is currently on, so the URL is reachable for the
+      project owner and returns a Vercel SSO redirect for everyone else
+- [x] Tailwind is applied and demonstrably working on that page
 - [ ] A test runner is installed and a trivial test passes, runnable without a browser
-      or network
-- [ ] Secrets live in a gitignored environment file; none are committed
-- [ ] Any dependency beyond the stack already settled in `CLAUDE.md` was asked about
+      or network — **outstanding, this is the whole remaining job of this ticket**
+- [x] Secrets live in a gitignored environment file; none are committed — `.gitignore`
+      covers `.env.local` and no secret has been committed. The file itself does not
+      exist yet; creating it is Section 6 of the course handbook, not this ticket
+- [x] Any dependency beyond the stack already settled in `CLAUDE.md` was asked about
       before being added
