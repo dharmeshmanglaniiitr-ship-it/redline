@@ -185,6 +185,25 @@ corrupt for anyone who clones on Windows. The corpus is also compared byte for b
 the paired fixtures and the verbatim citations, which the same translation would break.
 `.gitattributes` pins the corpus to LF and marks the PDF binary.
 
+### D12 — The working surface is `/review`, under an `(app)` route group
+
+The landing page keeps `/` and is not touched again until ticket 18. Everything a signed-in
+Signer does lives under `app/(app)/`, with the shell at `app/(app)/layout.tsx` — the target
+the app-shell brief already names — and the working screen at `app/(app)/review/page.tsx`.
+
+Ticket 04 is the first ticket into that group, so it establishes the shell that 05, 07, 08,
+12, 13, 14 and 15 all extend. That is also why 04 and 05 were not run in parallel: both
+would have created the same `layout.tsx`.
+
+### D13 — Bringing a document in: paste and file are equals
+
+The app-shell brief lists this as unresolved. Settled: both paths are offered side by side
+and both produce the same extraction result.
+
+Paste is the path that works with no account, no dependency and no Supabase, which is the
+configuration you asked to be able to run in. Making it a second-class alternative to file
+upload would have meant the only fully-working path in your absence was the degraded one.
+
 ---
 
 ## Could not be verified in this run
