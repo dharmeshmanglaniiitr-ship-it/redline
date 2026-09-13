@@ -6,6 +6,7 @@ import { readPastedText } from "@/lib/document/extract";
 import type { ExtractionResult, UnreadableReason } from "@/lib/document/extraction";
 
 import { GalleyFoot, LABEL, Masthead, ProofMark, STAMP } from "../_components/galley";
+import { KeepInLibrary } from "./keep-in-library";
 import { readFileInBrowser } from "./read-in-browser";
 
 type Screen =
@@ -228,6 +229,10 @@ export default function ReviewPage() {
               </p>
             ))}
           </div>
+
+          {/* Only a document that was read can be kept, and the type says so: the
+              unreadable arm carries no text to pass. */}
+          <KeepInLibrary document={extracted} />
         </section>
       )}
 

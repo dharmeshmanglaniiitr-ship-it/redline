@@ -34,7 +34,7 @@ Filled in as tickets complete. See each ticket's own `Status:` line for detail.
 | 02 | Settle the hedging trigger | done — ADR 0006 |
 | 03 | Settle how jurisdiction is determined | done — ADR 0007 |
 | 04 | Browser text extraction | done |
-| 05 | Sign-in and per-Signer isolation | pending |
+| 05 | Sign-in and per-Signer isolation | 5/7 — blocked on a database |
 | 06 | Fixture corpus and test harness | done |
 | 07 | Analysis seam — plain-English summary | pending |
 | 08 | Risk flags — verified citations, derived severity | pending |
@@ -233,6 +233,52 @@ Ticket 05 creates it. Until then the working surface is reachable directly at `/
 and runs with the Supabase variables absent, so nothing is blocked — but the landing
 page's call to action is broken in the meantime. If you deploy before ticket 05 lands,
 that link 404s.
+
+### D16 — Supabase client is `@supabase/supabase-js` + `@supabase/ssr`, and auth runs server-side
+
+`CLAUDE.md` requires asking before a dependency. Asked and answered: those two and nothing
+else. `@supabase/ssr` is what makes a session survive closing the tab, because a server
+component can read cookies but cannot write them, so something has to renew an expiring
+token before render.
+
+All auth runs through Server Actions rather than a browser client, so the password never
+enters client state and there is no second session-reading path that can disagree with the
+verified one. Next 16 renamed `middleware.ts` to `proxy.ts`; the matcher is scoped to
+`/review`, `/sign-in` and `/auth` so the deployed landing page keeps its static caching.
+
+### D17 — Two criteria on ticket 05 are deliberately left unticked
+
+This is the most important thing in this report, because it concerns the one guarantee
+`CLAUDE.md` calls non-negotiable: a Signer's documents are theirs alone.
+
+**What is built:** the `documents` table, row level security, and four separate policies
+(one per command rather than one `for all`, so widening any of them later is a visible
+edit). Every policy is scoped to `auth.uid()`. `anon` is additionally revoked, so a
+session-less caller holding the publishable key is refused by two independent mechanisms.
+No column holds bytes, a blob, base64 or a storage-bucket key — only extracted text.
+
+**What is NOT proven:** none of it has ever run. There is no Supabase project, and I
+checked for every alternative — no Docker, no local Postgres, no Supabase CLI, no
+credentials. So:
+- Criterion 3 ("RLS is enabled, and a second Signer's account cannot read the first's
+  rows") is **unticked**. The subagent had ticked it; I reversed that. The policies are
+  written, not enabled — nothing is enabled until you apply the migration.
+- Criterion 4 (the cross-Signer read test) is **unticked**. The test is real and complete
+  — two accounts, nine different read, write and delete attempts, every assertion made
+  through a Signer's own client rather than the service-role one that would bypass RLS.
+  It skips when the three `SUPABASE_TEST_*` variables are absent, printing a banner to
+  stderr that names them and says isolation is not proven. It cannot report green unrun.
+
+**What does run today:** `tests/migrations.test.ts` reads the actual `.sql` files and
+asserts that every table has RLS, every policy is scoped to `auth.uid()`, no policy is
+`using (true)`, and no column could hold a file. I verified it bites by adding a
+deliberately bad migration myself — a `bytea` column, `using (true)`, missing policies —
+and it produced four accurate failures. It is a real check over real artifacts, and it is
+not a substitute for running the isolation test.
+
+**First thing to do when you sit down:** apply the migration to a scratch project, set the
+three `SUPABASE_TEST_*` variables, and run `npm test`. Until that test runs green, treat
+per-Signer isolation as designed rather than delivered.
 
 ---
 

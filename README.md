@@ -18,9 +18,8 @@ eighteen implementation tickets, and one public page that demonstrates the idea 
 sample contract written for the purpose. The page says so in place, because a mocked-up
 flag presented as real output would break the one rule the product is built on.
 
-What does not exist yet: document parsing, sign-in, the analysis itself, the counter-offers,
-the question box, red lines, and the library. The page's one action points at `/sign-in`,
-which is not built, so it will 404.
+What does not exist yet: the analysis itself, the counter-offers, the question box, red
+lines, and the library view.
 
 ## Running it
 
@@ -29,8 +28,28 @@ npm install
 npm run dev
 ```
 
-The page is at http://localhost:3000. No environment variables are needed yet, because
-nothing is wired to a database or a model provider.
+The page is at http://localhost:3000. It runs with no environment variables at all: a
+Signer can bring a contract in at `/review` and read the text that came out of it, with
+the account and the library switched off and said to be switched off.
+
+### Turning accounts on
+
+Copy `.env.example` to `.env.local` and fill in `NEXT_PUBLIC_SUPABASE_URL` and
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` from the Supabase project's API settings. `.env.local` is
+gitignored and is the only place a real key belongs.
+
+Then, in the Supabase project:
+
+1. Run every file in `supabase/migrations/` in order, in the SQL editor. They create the
+   `documents` table, switch row level security on, and add the four policies that make a
+   Signer's documents unreachable from any other account.
+2. Add `<origin>/auth/confirm` to the Redirect URLs under Authentication, URL
+   Configuration, or the link in a confirmation email will not come back to the app.
+
+To run the cross-Signer isolation test against that project, set `SUPABASE_TEST_URL`,
+`SUPABASE_TEST_ANON_KEY` and `SUPABASE_TEST_SERVICE_ROLE_KEY` as well. It creates and
+deletes accounts, so point it at a scratch project. Without all three it skips and says
+which are missing; it never reports green without having run.
 
 ## Where the thinking lives
 
@@ -49,7 +68,7 @@ Read these before changing anything:
 
 ## Stack
 
-Next.js with TypeScript and the App Router, Tailwind, deployed on Vercel. Supabase will
-carry auth and storage; model calls will go through OpenRouter. Uploaded files are parsed
-in the browser and only the extracted text is ever stored, so an original document never
+Next.js with TypeScript and the App Router, Tailwind, deployed on Vercel. Supabase carries
+auth and the database; model calls will go through OpenRouter. Uploaded files are parsed in
+the browser and only the extracted text is ever stored, so an original document never
 reaches a server.
