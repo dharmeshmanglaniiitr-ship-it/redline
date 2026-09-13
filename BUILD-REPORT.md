@@ -30,7 +30,7 @@ Filled in as tickets complete. See each ticket's own `Status:` line for detail.
 
 | # | Ticket | Status |
 |---|--------|--------|
-| 01 | Project scaffold and first deploy | pending |
+| 01 | Project scaffold and first deploy | done |
 | 02 | Settle the hedging trigger | done — ADR 0006 |
 | 03 | Settle how jurisdiction is determined | done — ADR 0007 |
 | 04 | Browser text extraction | pending |
@@ -86,6 +86,21 @@ The suite runs with no API key. The stub returns payloads built from the fixture
 JSON, so tests exercise real parsing, real citation verification and real severity
 derivation over known input. What this does *not* test is whether the live model produces
 good analysis — that is what `npm run smoke` is for.
+
+### D8 — Vitest 4, not 5, and what that costs you
+
+`vitest@5` peers `@types/node@^22 || >=24`; this repo pins `@types/node@^20`, so npm
+refuses it. Vitest 4.1.11 installs clean against the existing pin, so I took 4 rather
+than bump `@types/node` across the whole repo inside a ticket that was only meant to add
+a test runner. Worth knowing: the local runtime is Node v24.19.0 being typechecked
+against types for Node 20, which was already true before this run. If you want Vitest 5,
+bump `@types/node` first and expect the typecheck surface to move.
+
+The config is `vitest.config.mts`, not `.ts`. As `.ts` it printed a CommonJS/ESM
+forward-compatibility warning on every run, and a warning that always fires is one
+everyone learns to scroll past. The `.mts` extension is what the in-repo Next.js 16
+guide recommends anyway. The alternative, `"type": "module"` in `package.json`, would
+have changed module resolution for `next.config.ts` and PostCSS too.
 
 ### D5 — Browser parsing uses `pdfjs-dist` and `mammoth`
 

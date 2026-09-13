@@ -11,7 +11,7 @@ so the test setup must be able to exercise them without a browser or a network.
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent — partially done. The scaffold, Tailwind and the Vercel
+**Status:** done — 2026-09-13. The scaffold, Tailwind and the Vercel
 deploy already exist and were verified on 2026-09-13. **Do not re-scaffold the
 application and do not touch `app/page.tsx`.** The only outstanding work is the test
 runner: install one that runs without a browser or a network, add an `npm test` script,
@@ -23,8 +23,8 @@ and land a trivial passing test. Then this ticket is done.
       Vercel Deployment Protection is currently on, so the URL is reachable for the
       project owner and returns a Vercel SSO redirect for everyone else
 - [x] Tailwind is applied and demonstrably working on that page
-- [ ] A test runner is installed and a trivial test passes, runnable without a browser
-      or network — **outstanding, this is the whole remaining job of this ticket**
+- [x] A test runner is installed and a trivial test passes, runnable without a browser
+      or network — Vitest 4 in a node environment, run with `npm test` (2026-09-13)
 - [x] Secrets live in a gitignored environment file; none are committed — `.gitignore`
       covers `.env.local` and no secret has been committed. The file itself does not
       exist yet; creating it is Section 6 of the course handbook, not this ticket
