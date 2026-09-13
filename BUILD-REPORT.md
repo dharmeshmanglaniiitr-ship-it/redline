@@ -33,7 +33,7 @@ Filled in as tickets complete. See each ticket's own `Status:` line for detail.
 | 01 | Project scaffold and first deploy | done |
 | 02 | Settle the hedging trigger | done — ADR 0006 |
 | 03 | Settle how jurisdiction is determined | done — ADR 0007 |
-| 04 | Browser text extraction | pending |
+| 04 | Browser text extraction | done |
 | 05 | Sign-in and per-Signer isolation | pending |
 | 06 | Fixture corpus and test harness | done |
 | 07 | Analysis seam — plain-English summary | pending |
@@ -203,6 +203,36 @@ and both produce the same extraction result.
 Paste is the path that works with no account, no dependency and no Supabase, which is the
 configuration you asked to be able to run in. Making it a second-class alternative to file
 upload would have meant the only fully-working path in your absence was the degraded one.
+
+### D14 — The unreadable state is a type error, not a convention
+
+`ExtractionResult` is a discriminated union whose `unreadable` arm carries no `text` and no
+`sentences` field at all. I verified this rather than taking it on trust: a probe file that
+reads `result.text` without narrowing on `outcome` fails to compile with
+`TS2339: Property 'text' does not exist on type 'ExtractionResult'`.
+
+This matters more than it sounds. The spec calls an unreadable document presenting as a
+clean bill the worst failure this product can have, and the usual defence is a rule someone
+has to remember. Here a caller that forgets the case does not ship.
+
+Three supporting calls the agent made, all kept:
+- **A 200-character floor.** A scan with a burnt-in header yields a few characters, and
+  analysing almost-nothing is the same failure wearing a disguise. What did come out is
+  shown, so the Signer can see why it was rejected.
+- **Five unreadable reasons, not one.** A password-protected file and a scan need different
+  advice; calling an encrypted contract "damaged" would be wrong. The UI message table is
+  keyed by the reason type, so a new reason without copy will not compile.
+- **PDF line unwrapping.** `splitIntoSentences` ends a sentence at a line break, so a PDF's
+  typesetting would have cut every citation at half a line. The rejoin is conservative —
+  its failure mode is a break left in, never one invented.
+
+### D15 — `/sign-in` is currently a dangling link
+
+`app/page.tsx` (the finished landing page) links to `/sign-in`, which does not exist yet.
+Ticket 05 creates it. Until then the working surface is reachable directly at `/review`
+and runs with the Supabase variables absent, so nothing is blocked — but the landing
+page's call to action is broken in the meantime. If you deploy before ticket 05 lands,
+that link 404s.
 
 ---
 

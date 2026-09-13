@@ -16,15 +16,17 @@ distinguishable from an analysis failure.
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done — 2026-09-13. Extraction is a discriminated union, so reading text off
+an unreadable document is a compile error rather than a convention. pdfjs-dist and mammoth
+parse client-side; the scan fixture is driven through in node with no browser.
 
-- [ ] A Signer can select a contract and see the extracted text rendered back to them
-- [ ] Parsing happens in the browser; the original file is never sent to a server or
+- [x] A Signer can select a contract and see the extracted text rendered back to them
+- [x] Parsing happens in the browser; the original file is never sent to a server or
       persisted anywhere
-- [ ] An image-only PDF produces an explicit unreadable state that a Signer cannot
+- [x] An image-only PDF produces an explicit unreadable state that a Signer cannot
       mistake for a successful read or a clean result
-- [ ] The unreadable state is distinguishable in the code from an analysis that ran and
+- [x] The unreadable state is distinguishable in the code from an analysis that ran and
       found nothing
-- [ ] A test drives an image-only fixture through extraction and asserts the unreadable
+- [x] A test drives an image-only fixture through extraction and asserts the unreadable
       state, with no browser required
-- [ ] The parsing dependency was asked about before being added (`CLAUDE.md`)
+- [x] The parsing dependency was asked about before being added (`CLAUDE.md`)
