@@ -117,6 +117,21 @@ const CLAUSES: Clause[] = [
   },
 ];
 
+const WHAT_YOU_GET: [string, string][] = [
+  [
+    "Risky clauses, ranked worst first.",
+    "Each flag quotes the sentence it came from. If it cannot show you that sentence, Redline does not show the flag.",
+  ],
+  [
+    "A counter-offer drafted for every flag.",
+    "Wording you can paste straight into a reply to your client, written to go out as it stands.",
+  ],
+  [
+    "Questions answered from the document itself.",
+    "Ask what a clause means, or what the contract does not cover. Where the document is silent, Redline says so.",
+  ],
+];
+
 const CLEARED = [
   ["Invoice due date", "Thirty days, stated in writing"],
   ["Expenses", "Pre-approved costs reimbursed"],
@@ -281,12 +296,12 @@ export default function Home() {
           <header className="grid max-w-[68rem] items-end gap-x-16 gap-y-9 lg:grid-cols-[minmax(0,1fr)_24rem]">
             <div>
               <h1 className="max-w-[18ch] text-[clamp(2.05rem,4.6vw,3.5rem)] font-bold leading-[1.02] tracking-[-0.03em] text-ink">
-                Every flag points at the sentence it came from.
+                Know what you&rsquo;re actually agreeing to.
               </h1>
               <p className="mt-5 max-w-[58ch] text-[1.05rem] leading-[1.5] text-ink-soft">
-                You did not write this contract. Redline marks the terms that will cost
-                you and shows you the words behind each mark, so you can check it
-                against your own copy and ask for a change.
+                Your client sent you a contract to sign. Redline tells you which terms
+                will cost you and quotes the sentence each one came from, so you can
+                find it in your own copy and ask for a change.
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
                 <a href="/sign-in" className={STAMP}>
@@ -347,6 +362,24 @@ export default function Home() {
               </ol>
             </nav>
           </header>
+
+          <div className="mt-14 max-w-[64rem] border-t border-rule pt-8">
+            <h2 className="text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-ink-soft">
+              What you get
+            </h2>
+            <ul className="mt-6 grid gap-x-12 gap-y-7 sm:grid-cols-3">
+              {WHAT_YOU_GET.map(([name, note]) => (
+                <li key={name} className="border-b border-rule pb-6">
+                  <span className="block text-[0.95rem] font-semibold leading-snug text-ink">
+                    {name}
+                  </span>
+                  <span className="mt-2 block text-[0.88rem] leading-relaxed text-ink-soft">
+                    {note}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           <div className="numeric mt-14 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b-2 border-ink pb-3 text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-ink">
             <span>Sample: independent contractor agreement</span>
