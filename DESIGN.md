@@ -305,8 +305,17 @@ There are no shadows anywhere in this system, and none should be added. Depth is
 three ways: the hard material change between marking blue and proof stock; hairline
 rules at `{colors.rule}` for lists and column separation, stepping to 2px at
 `{colors.ink}` for the masthead and galley foot where the sheet's own structure is being
-declared; and opacity, where unselected clauses sit at 0.75 and the selected clause at
+declared; and opacity, where unselected clauses sit at 0.82 and the selected clause at
 1.0 so attention is a lighting change rather than a lift.
+
+**The Dim Floor Rule.** 0.82 is the floor, not a taste setting, and nothing dimmed may
+go below it. Dimming blends text toward the stock behind it, and the severity word is
+the tightest thing on the sheet: `{colors.mark-deep}` on proof stock is 6.37:1 at full
+opacity, 4.03:1 at 0.75, and clears the 4.5:1 that WCAG 2.2 AA asks of 11.2px text only
+at 0.81 and above. The value was 0.75 until an axe-core audit on 2026-09-13 caught the
+severity word failing in every unselected clause, which is three of the four findings at
+any moment. Severity is encoded three ways, so no information was lost, but the text
+still has to be readable. Dim further and it stops being.
 
 **Motion.** Exactly one authored moment exists: the leader rule draws itself from the
 margin mark to the sentence over 620ms on `cubic-bezier(0.16, 1, 0.3, 1)`, implemented
@@ -382,7 +391,7 @@ The margin half of the pair: a proof-mark glyph at 24px in vermilion, the findin
 in document ink, and the severity meter. It is a `button` carrying `aria-pressed` and
 `aria-controls` pointing at the sentence's id, with a visually hidden "Show the sentence
 in clause N this came from". Selecting it opens the cost explanation beneath at 40ch,
-raises its clause from 0.75 to full opacity, and — at 1024px and above — draws the
+raises its clause from 0.82 to full opacity, and — at 1024px and above — draws the
 leader rule. At 1024px and above the margin column carries a hairline left rule and
 2rem of left padding.
 

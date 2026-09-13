@@ -400,7 +400,7 @@ export default function Home() {
                 <div
                   key={clause.id}
                   className={`grid max-w-[64rem] gap-x-10 gap-y-4 transition-opacity duration-500 lg:grid-cols-[minmax(0,1fr)_18rem] ${
-                    active ? "opacity-100" : "opacity-75"
+                    active ? "opacity-100" : "opacity-[0.82]"
                   }`}
                 >
                   <div>
