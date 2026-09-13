@@ -1,0 +1,92 @@
+BOOKKEEPING SERVICES AGREEMENT
+
+This Agreement is made on 20 January 2026 between Calder & Finch Accountants Limited, a company registered in England and Wales, whose registered office is at 12 Gadsby Street, Leeds LS1 4RN (the "Client"), and Marek Dvorak, trading as Dvorak Books, of 88 Prospect Terrace, Leeds LS6 2AH (the "Contractor").
+
+The parties agree as follows.
+
+1. THE ENGAGEMENT
+
+1.1 The Contractor shall keep the books of the Client's small-business clients listed in Schedule 1, and shall prepare the monthly reconciliations described there (the "Deliverables").
+1.2 The Contractor shall begin work on 2 February 2026 and shall deliver the last of the Deliverables by 31 July 2026 (the "Term").
+1.3 The Contractor shall perform the Services with reasonable skill and care and in accordance with the Client's internal procedures notified to the Contractor in writing.
+1.4 This Agreement does not renew, and any further engagement of the Contractor requires a fresh written agreement signed by both parties.
+
+2. HOW THE WORK IS DELIVERED
+
+2.1 The Contractor shall deliver each monthly reconciliation to the Client by the tenth working day of the following month.
+2.2 The Contractor shall deliver each reconciliation as a spreadsheet together with a short note of any entry it could not match.
+2.3 The Contractor shall correct any error the Client identifies within five working days at no additional charge.
+
+3. CHANGES
+
+3.1 A change to the Deliverables, to the Term or to the fee takes effect only once both parties have signed a written change order recording it.
+3.2 Neither party may vary the fee or the scope of the Deliverables without the other party's written agreement.
+
+4. FEES, ACCEPTANCE AND PAYMENT
+
+4.1 The Client shall pay the Contractor £2,200 a month for the Deliverables, invoiced at the end of each month.
+4.2 The Client shall notify the Contractor in writing within seven (7) days of delivery whether a Deliverable meets the acceptance criteria in Schedule 2, identifying by reference to those criteria anything that does not.
+4.3 A Deliverable is treated as accepted if the Client gives no notice under clause 4.2 within that period.
+4.4 The Client shall pay each invoice within fourteen (14) days of the date of the invoice.
+
+5. CONFIDENTIALITY
+
+5.1 The Contractor shall keep confidential the financial information of the Client and of the Client's clients, and shall use it only for the purposes of this Agreement.
+5.2 Clause 5.1 does not apply to information that is already public or that the Contractor is required by law to disclose.
+
+6. STATUS OF THE CONTRACTOR
+
+6.1 The Contractor is an independent contractor and nothing in this Agreement makes the Contractor an employee, agent or partner of the Client.
+6.2 The Contractor decides how and when to carry out the work, subject only to the delivery dates in clause 2.1.
+
+7. INTELLECTUAL PROPERTY
+
+7.1 On payment in full, the Contractor assigns to the Client the intellectual property rights in the reconciliations and reports prepared under this Agreement.
+7.2 The assignment in clause 7.1 covers those reconciliations and reports and nothing else, and the Contractor's own spreadsheet templates and working methods remain the Contractor's property.
+
+8. INDEMNITY AND LIABILITY
+
+8.1 Each party shall indemnify the other against any claim brought by a third party to the extent that the claim arises from that party's own breach of this Agreement.
+8.2 The total liability of each party under this Agreement is limited to the total fees payable under clause 4.
+8.3 Nothing in this Agreement limits either party's liability for death or personal injury caused by negligence, or for fraud.
+
+9. RESTRICTIONS AFTER THE TERM
+
+9.1 For three (3) months after the end of the Term, the Contractor shall not provide bookkeeping services to any business whose registered office is within ten (10) miles of the Client's office at Gadsby Street, and the Client shall pay the Contractor £1,500 within thirty (30) days of the end of the Term in consideration of that restriction.
+9.2 Nothing in clause 9.1 prevents the Contractor from continuing to act for a business that was already a client of the Contractor before this Agreement began.
+
+10. ENDING THIS AGREEMENT
+
+10.1 Either party may end this Agreement by giving the other thirty (30) days' written notice.
+10.2 Where the Client ends this Agreement under clause 10.1, the Client shall pay for every Deliverable accepted or delivered before the end date, for work in progress on the date of the notice, and a cancellation fee equal to one month's fee.
+10.3 Clauses 5, 7, 8 and 9 survive the end of this Agreement.
+
+11. NOTICES
+
+11.1 A notice under this Agreement must be in writing and sent to the address shown at the head of this Agreement or to an email address the receiving party has given for the purpose.
+
+12. GOVERNING LAW
+
+12.1 This Agreement and any dispute arising out of or in connection with it are governed by the law of England and Wales, and the parties submit to the exclusive jurisdiction of the courts of England and Wales.
+
+13. WHOLE AGREEMENT
+
+13.1 This Agreement is the whole agreement between the parties about the Deliverables and replaces any earlier proposal, quotation or discussion.
+
+SCHEDULE 1 — THE CLIENT ACCOUNTS COVERED
+
+Account 1: Harrow Green Landscaping, monthly reconciliation and supplier ledger.
+Account 2: Ollerton Veterinary Practice, monthly reconciliation and payroll journal.
+Account 3: Sable Row Bakery, monthly reconciliation and stock adjustment.
+Account 4: Pinfold Cycles, monthly reconciliation and card settlement matching.
+
+SCHEDULE 2 — ACCEPTANCE CRITERIA
+
+A Deliverable meets the acceptance criteria when all three of the following are true.
+Criterion 1: Every bank line in the period is either matched to a ledger entry or listed in the unmatched note.
+Criterion 2: The closing balance agrees with the bank statement for the period.
+Criterion 3: Every adjustment carries a reference to the document that supports it.
+
+Signed for and on behalf of Calder & Finch Accountants Limited.
+
+Signed by Marek Dvorak, trading as Dvorak Books.

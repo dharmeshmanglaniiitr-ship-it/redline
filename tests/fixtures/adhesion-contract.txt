@@ -1,0 +1,87 @@
+SERVICES AGREEMENT
+
+This Agreement is made on 4 March 2026 between Harbourline Retail Group Limited, a company registered in England and Wales, whose registered office is at 18 Clement Wharf, London SE1 2AB (the "Client"), and Priya Raman, trading as Raman Studio, of 7 Foundry Road, Bristol BS2 9QQ (the "Contractor").
+
+The parties agree as follows.
+
+1. THE ENGAGEMENT
+
+1.1 The Contractor shall design and build a replacement customer-facing website for the Client, comprising the page templates, visual designs and front-end code listed in Schedule 1 (the "Deliverables").
+1.2 The Contractor shall begin work on 16 March 2026 and shall deliver the last of the Deliverables by 14 August 2026 (the "Term").
+1.3 The Contractor shall perform the Services with reasonable skill and care and shall report on progress at intervals the Client reasonably requests.
+1.4 This Agreement does not renew, and any engagement of the Contractor after the Term requires a fresh written agreement signed by both parties.
+
+2. HOW THE WORK IS DELIVERED
+
+2.1 The Contractor shall deliver each Deliverable to the Client by the date shown against it in Schedule 1.
+2.2 The Contractor shall deliver the front-end code as a single archive together with the build instructions needed to run it.
+2.3 The Contractor shall carry out up to two rounds of revisions to each Deliverable at no additional charge, each round to be requested by the Client in writing within five working days of delivery.
+
+3. CHANGES
+
+3.1 A change to the Deliverables, to the Term or to the fee takes effect only once both parties have signed a written change order recording it.
+3.2 Neither party is obliged to agree to a change order.
+
+4. FEES AND PAYMENT
+
+4.1 The Client shall pay the Contractor a fixed fee of £18,000 for the Deliverables, invoiced in three equal instalments.
+4.2 No invoice falls due for payment until the Client has accepted the relevant Deliverable as satisfactory in the Client's sole and absolute discretion, and the Client is not required to apply any standard, test or criterion in reaching that decision.
+4.3 Where the Client accepts a Deliverable, the corresponding invoice is payable within sixty (60) days of acceptance.
+4.4 The Contractor shall bear its own costs of performing the Services, including software licences, equipment and travel within the United Kingdom.
+
+5. INTELLECTUAL PROPERTY
+
+5.1 The Contractor assigns to the Client, absolutely and with full title guarantee, all present and future intellectual property rights in the Deliverables.
+5.2 That assignment extends to any tool, library, framework, method or item of know-how that the Contractor created before 16 March 2026 and used in producing the Deliverables, and to any work of a similar character that the Contractor may create after the Term ends.
+5.3 The Contractor waives, so far as the law allows, all moral rights in the Deliverables.
+5.4 The Contractor shall sign any document the Client reasonably requires in order to record or perfect the rights assigned under this clause 5.
+
+6. CONFIDENTIALITY
+
+6.1 Each party shall keep confidential the other party's commercial, technical and customer information disclosed to it under this Agreement, and shall use that information only for the purposes of this Agreement.
+6.2 Clause 6.1 does not apply to information that is already public, that becomes public otherwise than through a breach of this Agreement, or that a party is required by law to disclose.
+
+7. STATUS OF THE CONTRACTOR
+
+7.1 The Contractor is an independent contractor and nothing in this Agreement makes the Contractor an employee, agent or partner of the Client.
+7.2 The Contractor is responsible for its own tax and national insurance contributions in respect of the fee.
+
+8. TERMINATION
+
+8.1 The Client may end this Agreement at any time, for any reason or for none, by giving the Contractor three (3) days' written notice, and nothing is payable to the Contractor in respect of the unexpired part of the Term.
+8.2 The Contractor may end this Agreement only if the Client has failed to pay an undisputed invoice within thirty (30) days of a written reminder.
+8.3 Clauses 5, 6, 9 and 10 survive the end of this Agreement.
+
+9. RESTRICTIONS AFTER THE TERM
+
+9.1 For twenty-four (24) months after the end of the Term, the Contractor shall not provide design, development or digital consultancy services to any business that sells goods or services to consumers, anywhere in the United Kingdom or the European Economic Area, and no payment of any kind is made to the Contractor in respect of that restriction.
+9.2 The Contractor accepts that the restriction in clause 9.1 is reasonable to protect the Client's business.
+
+10. INDEMNITY AND LIABILITY
+
+10.1 Each party shall indemnify the other against any claim brought by a third party to the extent that the claim arises from that party's own breach of this Agreement.
+10.2 The total liability of each party under this Agreement, whether in contract, tort or otherwise, is limited to the total fees payable under clause 4.
+10.3 Nothing in this Agreement limits either party's liability for death or personal injury caused by negligence, or for fraud.
+
+11. NOTICES
+
+11.1 A notice under this Agreement must be in writing and sent to the address shown at the head of this Agreement or to an email address the receiving party has given for the purpose.
+
+12. GOVERNING LAW
+
+12.1 This Agreement and any dispute arising out of or in connection with it are governed by the law of England and Wales, and the parties submit to the exclusive jurisdiction of the courts of England and Wales.
+
+13. WHOLE AGREEMENT
+
+13.1 This Agreement is the whole agreement between the parties about the Services and replaces any earlier proposal, quotation or discussion.
+
+SCHEDULE 1 — THE DELIVERABLES
+
+Item 1: Design system and component library, due 10 April 2026.
+Item 2: Page templates for the home, category, product and checkout pages, due 22 May 2026.
+Item 3: Front-end code for the templates in Item 2, due 17 July 2026.
+Item 4: Handover pack, including build instructions and a two-hour walkthrough, due 14 August 2026.
+
+Signed for and on behalf of Harbourline Retail Group Limited.
+
+Signed by Priya Raman, trading as Raman Studio.

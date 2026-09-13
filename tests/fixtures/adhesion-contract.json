@@ -1,0 +1,73 @@
+{
+  "fixture": "adhesion-contract.txt",
+  "description": "An aggressive client-favourable freelance agreement carrying all four settled dangerous clauses at their dangerous threshold, plus a governing-law clause for jurisdiction detection to find. The four checklist entries whose thresholds PRD.md leaves unsettled are deliberately present in their standard form, so nothing in this fixture depends on a threshold that has not been decided.",
+  "sender": "Harbourline Retail Group Limited",
+  "engagement": "A fixed-fee redesign and rebuild of the Sender's customer-facing website, running from 16 March to 14 August 2026 for £18,000.",
+  "jurisdiction": {
+    "expected": "England and Wales",
+    "sourceSentence": "12.1 This Agreement and any dispute arising out of or in connection with it are governed by the law of England and Wales, and the parties submit to the exclusive jurisdiction of the courts of England and Wales."
+  },
+  "planted": [
+    {
+      "id": "payment-subjective",
+      "clauseType": "payment-approval",
+      "sourceSentence": "4.2 No invoice falls due for payment until the Client has accepted the relevant Deliverable as satisfactory in the Client's sole and absolute discretion, and the Client is not required to apply any standard, test or criterion in reaching that decision.",
+      "expectedSeverity": 4,
+      "mustBeFlagged": true,
+      "properties": { "acceptanceStandard": "subjective" },
+      "unstatedProperties": [],
+      "expectedHedged": false,
+      "why": "PRD §5: payment gated on the Sender's satisfaction with no defined acceptance criteria is the highest severity, because it withholds money already earned rather than future opportunity."
+    },
+    {
+      "id": "ip-overreaching",
+      "clauseType": "ip-assignment",
+      "sourceSentence": "5.2 That assignment extends to any tool, library, framework, method or item of know-how that the Contractor created before 16 March 2026 and used in producing the Deliverables, and to any work of a similar character that the Contractor may create after the Term ends.",
+      "expectedSeverity": 3,
+      "mustBeFlagged": true,
+      "properties": { "reachesBeyondDeliverable": true },
+      "unstatedProperties": [],
+      "expectedHedged": false,
+      "why": "PRD §5: assignment claiming pre-existing tools and methods and future work reaches beyond the deliverable, which is the high-severity threshold for this clause type."
+    },
+    {
+      "id": "noncompete-broad",
+      "clauseType": "non-compete",
+      "sourceSentence": "9.1 For twenty-four (24) months after the end of the Term, the Contractor shall not provide design, development or digital consultancy services to any business that sells goods or services to consumers, anywhere in the United Kingdom or the European Economic Area, and no payment of any kind is made to the Contractor in respect of that restriction.",
+      "expectedSeverity": 3,
+      "mustBeFlagged": true,
+      "properties": {
+        "durationMonths": 24,
+        "geographicScope": "the United Kingdom and the European Economic Area",
+        "industryScope": "any business selling goods or services to consumers",
+        "compensated": false
+      },
+      "unstatedProperties": [],
+      "expectedHedged": false,
+      "why": "PRD §5: all three triggers fire at once — duration well past 6-12 months, scope both industry-wide and geographically broad, and no separate compensation."
+    },
+    {
+      "id": "termination-no-kill-fee",
+      "clauseType": "termination-for-convenience",
+      "sourceSentence": "8.1 The Client may end this Agreement at any time, for any reason or for none, by giving the Contractor three (3) days' written notice, and nothing is payable to the Contractor in respect of the unexpired part of the Term.",
+      "expectedSeverity": 2,
+      "mustBeFlagged": true,
+      "properties": { "killFee": "absent" },
+      "unstatedProperties": [],
+      "expectedHedged": false,
+      "why": "PRD §5 and story 12: flagged, but below the threats to money already earned — it costs expected future income, not fees already invoiced."
+    }
+  ],
+  "expectedCleanChecklist": [
+    "one-sided-indemnity",
+    "uncapped-liability",
+    "auto-renewal",
+    "unilateral-change"
+  ],
+  "unanswerableQuestions": [
+    "What happens to the fee if the Client becomes insolvent?",
+    "May the Contractor subcontract any part of the work?",
+    "Who owns the photographs the Client supplies for the website?",
+    "Is the Contractor entitled to a portfolio credit on the finished website?"
+  ]
+}

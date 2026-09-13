@@ -1,0 +1,40 @@
+{
+  "fixture": "pair-hedge-silent.txt",
+  "description": "The silent half of the hedging pair. Identical to pair-hedge-stated.txt except for clause 9.1, which drops the words about payment for the restriction. Duration, geographic scope and industry scope are still stated; whether the restriction is compensated is not, so ADR 0006's trigger fires and the finding must be hedged naming that property. Severity is unchanged between the halves, because a hedge never lowers severity — the unstated property is assumed at its dangerous end.",
+  "sender": "Vale & Hart Hospitality Limited",
+  "engagement": "Four marketing campaigns for the Sender's three restaurant sites at £3,400 a month, running from 13 April to 9 October 2026.",
+  "jurisdiction": {
+    "expected": "undetermined",
+    "sourceSentence": null
+  },
+  "planted": [
+    {
+      "id": "noncompete-compensation-unstated",
+      "clauseType": "non-compete",
+      "sourceSentence": "9.1 For twelve (12) months after the end of the Term, the Contractor shall not provide marketing services to any business in the hospitality sector anywhere in the United Kingdom.",
+      "expectedSeverity": 3,
+      "mustBeFlagged": true,
+      "properties": {
+        "durationMonths": 12,
+        "geographicScope": "anywhere in the United Kingdom",
+        "industryScope": "the hospitality sector"
+      },
+      "unstatedProperties": ["compensated"],
+      "expectedHedged": true,
+      "why": "ADR 0006: the contract does not say whether the restriction is separately compensated, so the finding is hedged and the hedge must name that property. Severity stays at 3 because the unstated property is assumed at its dangerous end, matching pair-hedge-stated.txt."
+    }
+  ],
+  "expectedCleanChecklist": [
+    "payment-approval",
+    "termination-for-convenience",
+    "one-sided-indemnity",
+    "uncapped-liability",
+    "auto-renewal",
+    "unilateral-change"
+  ],
+  "unanswerableQuestions": [
+    "Which law governs this Agreement?",
+    "What happens to the retainer if the Client becomes insolvent?",
+    "Is the Contractor compensated for the twelve-month restriction after the Term?"
+  ]
+}

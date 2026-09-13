@@ -1,0 +1,37 @@
+{
+  "fixture": "pair-ip-overreaching.txt",
+  "description": "The overreaching half of the IP pair. Identical to pair-ip-bounded.txt except for clause 7.2, where the assignment also claims the Contractor's pre-existing tools, components and methods and any similar work produced after the Agreement ends.",
+  "sender": "Northwind Instruments Incorporated",
+  "engagement": "A fixed-fee mobile application interface design, running from 9 February to 22 May 2026 for $24,000.",
+  "jurisdiction": {
+    "expected": "New York",
+    "sourceSentence": "12.1 This Agreement and any dispute arising out of or in connection with it are governed by the laws of the State of New York, and the parties submit to the exclusive jurisdiction of the state and federal courts sitting in New York County."
+  },
+  "planted": [
+    {
+      "id": "ip-overreaching",
+      "clauseType": "ip-assignment",
+      "sourceSentence": "7.2 The assignment in clause 7.1 covers the Deliverables and also reaches the Contractor's pre-existing tools, components and methods, whether or not they were created for the Client, and any work of a similar character that the Contractor may produce after this Agreement ends.",
+      "expectedSeverity": 3,
+      "mustBeFlagged": true,
+      "properties": { "reachesBeyondDeliverable": true },
+      "unstatedProperties": [],
+      "expectedHedged": false,
+      "why": "PRD §5: the assignment claims pre-existing tools and methods and future work of a similar character, which is the high-severity threshold for this clause type."
+    }
+  ],
+  "expectedCleanChecklist": [
+    "payment-approval",
+    "non-compete",
+    "termination-for-convenience",
+    "one-sided-indemnity",
+    "uncapped-liability",
+    "auto-renewal",
+    "unilateral-change"
+  ],
+  "unanswerableQuestions": [
+    "What happens if Northwind Instruments becomes insolvent before the final invoice is paid?",
+    "May the Contractor subcontract the screen designs to another designer?",
+    "Does the Client have to credit the Contractor in the published application?"
+  ]
+}

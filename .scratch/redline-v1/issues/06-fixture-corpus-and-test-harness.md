@@ -25,16 +25,18 @@ not observed failures.
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done — 2026-09-13. Eight contract fixtures with sidecars, three one-line
+pairs, an image-only PDF, and a harness that runs the seams with no browser, network or
+key. Citation integrity is asserted first and mutation-checked.
 
-- [ ] Fixtures exist for each of the four clause types with settled thresholds, seeded
+- [x] Fixtures exist for each of the four clause types with settled thresholds, seeded
       at their dangerous threshold
-- [ ] Paired fixtures exist that differ only in one clause's scope, for the clause types
+- [x] Paired fixtures exist that differ only in one clause's scope, for the clause types
       where that distinction is defined
-- [ ] A genuinely balanced contract fixture exists, with nothing planted in it
-- [ ] An image-only PDF fixture exists for the unreadable case
-- [ ] A set of questions the documents do not answer exists, for the Q&A refusal case
-- [ ] Each fixture records what was planted and at what severity, so tests assert against
+- [x] A genuinely balanced contract fixture exists, with nothing planted in it
+- [x] An image-only PDF fixture exists for the unreadable case
+- [x] A set of questions the documents do not answer exists, for the Q&A refusal case
+- [x] Each fixture records what was planted and at what severity, so tests assert against
       a stated expectation rather than a guess
-- [ ] The harness runs the seams without a browser or network and asserts on invariants,
+- [x] The harness runs the seams without a browser or network and asserts on invariants,
       never on exact model wording

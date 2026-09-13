@@ -1,0 +1,26 @@
+{
+  "fixture": "balanced-contract.txt",
+  "description": "A genuinely fair agreement covering the same ground as the adhesion contract with nothing planted: objective written acceptance criteria with a deadline and deemed acceptance, IP assignment bounded to the deliverable with pre-existing materials carved out, mutual termination on notice with payment for work performed and a cancellation fee, and no restrictive covenant. PRD §4 test 4 runs against this fixture: zero severity-3-or-4 flags and a populated checked-clean list. The IP assignment is deliberately left off the clean list because PRD §5 allows a bounded assignment to be flagged at severity 1 rather than reported clean.",
+  "sender": "Meridian Learning Limited",
+  "engagement": "Copy-editing and proofreading six online course modules at £480 a module, running from 19 January to 29 May 2026.",
+  "jurisdiction": {
+    "expected": "Scotland",
+    "sourceSentence": "12.1 This Agreement and any dispute arising out of or in connection with it are governed by the law of Scotland, and the parties submit to the exclusive jurisdiction of the Scottish courts."
+  },
+  "planted": [],
+  "expectedCleanChecklist": [
+    "payment-approval",
+    "non-compete",
+    "termination-for-convenience",
+    "one-sided-indemnity",
+    "uncapped-liability",
+    "auto-renewal",
+    "unilateral-change"
+  ],
+  "unanswerableQuestions": [
+    "What happens to unpaid fees if the Client becomes insolvent?",
+    "Does the Contractor have to hold professional indemnity insurance?",
+    "Who pays the Contractor's travel costs for an on-site meeting?",
+    "How much notice must the Contractor give before taking a holiday?"
+  ]
+}

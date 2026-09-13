@@ -1,0 +1,37 @@
+{
+  "fixture": "pair-ip-bounded.txt",
+  "description": "The bounded half of the IP pair. Identical to pair-ip-overreaching.txt except for clause 7.2, where the assignment is confined to the Deliverables and the Contractor's pre-existing tools are carved out. Together the two files are ADR 0003's test: same clause type, same document, different scope, materially different severity.",
+  "sender": "Northwind Instruments Incorporated",
+  "engagement": "A fixed-fee mobile application interface design, running from 9 February to 22 May 2026 for $24,000.",
+  "jurisdiction": {
+    "expected": "New York",
+    "sourceSentence": "12.1 This Agreement and any dispute arising out of or in connection with it are governed by the laws of the State of New York, and the parties submit to the exclusive jurisdiction of the state and federal courts sitting in New York County."
+  },
+  "planted": [
+    {
+      "id": "ip-bounded",
+      "clauseType": "ip-assignment",
+      "sourceSentence": "7.2 The assignment in clause 7.1 covers the Deliverables and nothing else, and it does not reach the Contractor's pre-existing tools, components or methods, which remain the Contractor's property and are licensed to the Client only so far as they are embedded in a Deliverable.",
+      "expectedSeverity": 1,
+      "mustBeFlagged": false,
+      "properties": { "reachesBeyondDeliverable": false },
+      "unstatedProperties": [],
+      "expectedHedged": false,
+      "why": "PRD §5: standard 'the client owns what I built for them' is expected in freelance work and is flagged low or not at all. mustBeFlagged is false because going unflagged is a correct outcome here; expectedSeverity is the severity if it is flagged."
+    }
+  ],
+  "expectedCleanChecklist": [
+    "payment-approval",
+    "non-compete",
+    "termination-for-convenience",
+    "one-sided-indemnity",
+    "uncapped-liability",
+    "auto-renewal",
+    "unilateral-change"
+  ],
+  "unanswerableQuestions": [
+    "What happens if Northwind Instruments becomes insolvent before the final invoice is paid?",
+    "May the Contractor subcontract the screen designs to another designer?",
+    "Does the Client have to credit the Contractor in the published application?"
+  ]
+}

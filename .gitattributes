@@ -1,0 +1,7 @@
+# The fixture corpus is compared byte for byte. The paired contracts must differ in
+# exactly one line, every planted source sentence must match its fixture character for
+# character, and the image-only PDF carries byte offsets in its cross-reference table.
+# Line-ending translation would break all three, so it is switched off for the corpus.
+tests/fixtures/*.txt text eol=lf
+tests/fixtures/*.json text eol=lf
+tests/fixtures/*.pdf -text

@@ -1,0 +1,41 @@
+{
+  "fixture": "pair-hedge-stated.txt",
+  "description": "The stated half of the hedging pair. Clause 9.1 gives all four non-compete properties, including that the restriction is unpaid, so ADR 0006's trigger does not fire and the finding is stated plainly. This agreement has no governing-law clause at all, so jurisdiction is undetermined — the UK addresses and the UK-wide restriction are there on purpose, because ADR 0007 forbids inferring jurisdiction from anything but the governing-law clause.",
+  "sender": "Vale & Hart Hospitality Limited",
+  "engagement": "Four marketing campaigns for the Sender's three restaurant sites at £3,400 a month, running from 13 April to 9 October 2026.",
+  "jurisdiction": {
+    "expected": "undetermined",
+    "sourceSentence": null
+  },
+  "planted": [
+    {
+      "id": "noncompete-stated",
+      "clauseType": "non-compete",
+      "sourceSentence": "9.1 For twelve (12) months after the end of the Term, the Contractor shall not provide marketing services to any business in the hospitality sector anywhere in the United Kingdom, and no separate payment is made to the Contractor in respect of that restriction.",
+      "expectedSeverity": 3,
+      "mustBeFlagged": true,
+      "properties": {
+        "durationMonths": 12,
+        "geographicScope": "anywhere in the United Kingdom",
+        "industryScope": "the hospitality sector",
+        "compensated": false
+      },
+      "unstatedProperties": [],
+      "expectedHedged": false,
+      "why": "PRD §5: twelve months at the top of the 6-12 month range, industry-wide and nationwide, and uncompensated. ADR 0006: every property the severity function consumed is in the text, so the finding is stated plainly."
+    }
+  ],
+  "expectedCleanChecklist": [
+    "payment-approval",
+    "termination-for-convenience",
+    "one-sided-indemnity",
+    "uncapped-liability",
+    "auto-renewal",
+    "unilateral-change"
+  ],
+  "unanswerableQuestions": [
+    "Which law governs this Agreement?",
+    "What happens to the retainer if the Client becomes insolvent?",
+    "Must the Contractor attend the Client's weekly management meeting?"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "fixture": "pair-noncompete-narrow.txt",
+  "description": "The narrow half of the non-compete pair. Identical to pair-noncompete-broad.txt except for clause 9.1, where the restriction runs three months, is limited to bookkeeping within ten miles of one office, and is separately paid for. All four severity-determining properties are stated, so this finding is not hedged.",
+  "sender": "Calder & Finch Accountants Limited",
+  "engagement": "Monthly bookkeeping and reconciliation for four of the Sender's small-business accounts at £2,200 a month, running from 2 February to 31 July 2026.",
+  "jurisdiction": {
+    "expected": "England and Wales",
+    "sourceSentence": "12.1 This Agreement and any dispute arising out of or in connection with it are governed by the law of England and Wales, and the parties submit to the exclusive jurisdiction of the courts of England and Wales."
+  },
+  "planted": [
+    {
+      "id": "noncompete-narrow",
+      "clauseType": "non-compete",
+      "sourceSentence": "9.1 For three (3) months after the end of the Term, the Contractor shall not provide bookkeeping services to any business whose registered office is within ten (10) miles of the Client's office at Gadsby Street, and the Client shall pay the Contractor £1,500 within thirty (30) days of the end of the Term in consideration of that restriction.",
+      "expectedSeverity": 1,
+      "mustBeFlagged": false,
+      "properties": {
+        "durationMonths": 3,
+        "geographicScope": "within ten miles of the Client's office at Gadsby Street",
+        "industryScope": "bookkeeping services only",
+        "compensated": true
+      },
+      "unstatedProperties": [],
+      "expectedHedged": false,
+      "why": "PRD §5: short, narrow and separately compensated, so none of the three triggers fires. Story 11 requires this not to be presented as equivalent to the broad half of the pair."
+    }
+  ],
+  "expectedCleanChecklist": [
+    "payment-approval",
+    "termination-for-convenience",
+    "one-sided-indemnity",
+    "uncapped-liability",
+    "auto-renewal",
+    "unilateral-change"
+  ],
+  "unanswerableQuestions": [
+    "What happens to the final invoice if the Client becomes insolvent?",
+    "Is the Contractor required to hold professional indemnity insurance?",
+    "Who pays if HMRC challenges a reconciliation after the Term has ended?"
+  ]
+}

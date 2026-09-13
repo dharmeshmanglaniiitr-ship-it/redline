@@ -35,7 +35,7 @@ Filled in as tickets complete. See each ticket's own `Status:` line for detail.
 | 03 | Settle how jurisdiction is determined | done — ADR 0007 |
 | 04 | Browser text extraction | pending |
 | 05 | Sign-in and per-Signer isolation | pending |
-| 06 | Fixture corpus and test harness | pending |
+| 06 | Fixture corpus and test harness | done |
 | 07 | Analysis seam — plain-English summary | pending |
 | 08 | Risk flags — verified citations, derived severity | pending |
 | 09 | The checked-clean list | pending |
@@ -144,6 +144,46 @@ severity still stands, because under ADR 0003 it comes from properties of the wo
 which are textual facts. Only the jurisdiction-dependent legal claims — non-compete
 enforceability, arbitration effect, statutory caps on indemnity, and four others named in
 the ADR — are withheld rather than guessed.
+
+### D9 — Severity is an integer 1–4
+
+`DESIGN.md`'s severity meter is four cells and announces "severity, N of 4", so the scale
+had to be four steps. Mapped from `PRD.md` §5: subjective payment approval 4, IP reaching
+beyond the deliverable and a long/broad/uncompensated non-compete 3, termination for
+convenience with no kill fee 2, present-but-standard 1.
+
+The ordering invariant **4 > 3 > 2** is a test, not a hope — story 12 requires that
+termination for convenience ranks below threats to money already earned. The severity
+*words* (Low / Moderate / High / Severe) are provisional UI copy and must go through the
+humanizer skill when the UI lands; the numbers are the contract.
+
+### D10 — Four judgment calls inside the fixture corpus
+
+1. **`mustBeFlagged` was added to the sidecar shape.** `PRD.md` §5 says a bounded IP
+   assignment is "flagged low or not at all", which a bare severity number cannot express.
+   `expectedSeverity: 1, mustBeFlagged: false` says "1 if flagged, and not flagging it is
+   also correct". Recall tests use `mustBeFlagged`; the paired tests use `expectedSeverity`.
+2. **`ip-assignment` is deliberately absent from `expectedCleanChecklist`** on every
+   fixture with a bounded assignment, because §5 permits flagging it at 1 rather than
+   reporting it clean. Asserting "clean" there would assert something the PRD does not
+   settle. The balanced fixture still lists seven clean entries, so §4 test 4's
+   "populated checklist" half holds.
+3. **The adhesion fixture is standard on the four clauses whose thresholds ticket 10 has
+   not settled** — indemnity, liability cap, renewal, change control. A realistically
+   brutal contract would carry a one-sided indemnity, but planting one would make the
+   fixture depend on a threshold nobody has decided yet.
+4. **The hedging pair carries no governing-law clause but has UK addresses and a UK-wide
+   restriction.** ADR 0007 forbids inferring jurisdiction from a locale, so this fixture
+   exists to catch a detector that guesses. Its sidecar expects `undetermined`.
+
+### D11 — `.gitattributes` was added, which the ticket did not ask for
+
+Git's `core.autocrlf` is on. `unreadable-scan.pdf` contains no NUL bytes, so git
+auto-detects it as text and would rewrite its line endings on checkout, breaking the byte
+offsets in its cross-reference table — this ticket would have shipped a PDF that is
+corrupt for anyone who clones on Windows. The corpus is also compared byte for byte for
+the paired fixtures and the verbatim citations, which the same translation would break.
+`.gitattributes` pins the corpus to LF and marks the PDF binary.
 
 ---
 
