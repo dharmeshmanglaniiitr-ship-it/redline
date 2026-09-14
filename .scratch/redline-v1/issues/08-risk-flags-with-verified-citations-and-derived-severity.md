@@ -38,7 +38,7 @@ are worded.
 
 **Blocked by:** 02, 06, 07
 
-**Status:** implemented, uncommitted. `analyze()` now returns populated `flags`, the
+**Status:** done — 2026-09-14. `analyze()` returns populated `flags`, the review screen renders
 review screen renders them, and the four remaining pieces below are done. One criterion
 is qualified rather than ticked: see the note under the paired fixtures.
 

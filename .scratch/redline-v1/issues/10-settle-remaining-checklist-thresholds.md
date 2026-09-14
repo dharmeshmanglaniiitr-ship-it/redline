@@ -25,7 +25,7 @@ subscriptions, not freelance retainers.
 
 **Blocked by:** 09
 
-**Status:** implemented, uncommitted. `docs/adr/0008` records all four thresholds. The
+**Status:** done — 2026-09-14. `docs/adr/0008` records all four thresholds. The four clause types
 four clause types are in `SETTLED_CLAUSE_TYPES` with their properties, `deriveSeverity`
 and `severityTriggers` read them, `analyze()`'s `flagFrom` switch has an arm each, and
 two new corpus fixtures — `retainer-exposed.txt` and `retainer-bounded.txt`, identical

@@ -1,62 +1,68 @@
 # Build report — Redline v1
 
-Autonomous build run, started 2026-09-13. Orchestrated across subagents against the 18
-tickets in `.scratch/redline-v1/issues/`, in dependency order.
+Autonomous build across the 18 tickets in `.scratch/redline-v1/issues/`, in dependency
+order. Started 2026-09-13, finished 2026-09-14.
 
-This file is written as the build runs, so if the run dies partway it still records what
-was decided and why. **Ticket `Status:` lines are the source of truth for progress** —
-this file summarises them.
+**Ticket `Status:` lines are the source of truth.** This file summarises them and records
+the decisions made in your absence.
 
 ---
 
-## How to pick this up (read this first)
+## Run these first
 
 ```bash
-npm install          # vitest and the test harness are new since your last session
-npx tsc --noEmit     # typecheck
-npm test             # full suite
-npm run build        # production build
-npm run smoke        # fixture contract through the real pipeline, prints flags + sources
+npm install
+npx tsc --noEmit     # clean
+npm test             # 367 passed | 31 skipped
+npm run build        # 8 routes, / still statically prerendered
+npm run smoke        # the fixture through the real pipeline, against the live model
 ```
 
-Then read **Decisions made in your absence** below, because several of them settle things
-the repo previously recorded as open, and you may disagree with them.
+`npm run smoke` is the one worth your attention. **The live model works now** — see below.
+
+Then do the one thing this build could not do for you:
+
+```bash
+# apply both migrations to a scratch Supabase project, then:
+export SUPABASE_TEST_URL=... SUPABASE_TEST_ANON_KEY=... SUPABASE_TEST_SERVICE_ROLE_KEY=...
+npm test             # turns the 31 skipped isolation assertions green
+```
+
+Until that runs, **per-Signer isolation is designed, not delivered.** Three tickets carry
+an unticked criterion saying exactly that.
 
 ---
 
-## Where this run stopped, and how to resume
+## The headline: the live model was reached
 
-The run ended mid-ticket-08 when the Claude session limit was reached. Nothing was lost
-and nothing is broken: the working tree is clean, `npm test` is green, and every ticket's
-`Status:` line is accurate. Resuming is safe.
+The previous run recorded every OpenRouter call returning HTTP 429 from the pinned
+provider's shared pool, and every claim about live model behaviour in this build was
+untested. **That is no longer true.** During ticket 18 the limit lifted, and
+`npm run smoke` completed genuine end-to-end runs against the live model.
 
-**To resume:** start a fresh session and paste the same `/mattpocock-skills:implement`
-prompt. It reads every ticket's Status line and picks up at the first one not done, which
-is **ticket 08**.
+I ran it myself to confirm rather than taking it on report. What came back:
 
-**Ticket 08 is partially built.** Three modules landed before the run stopped and are
-committed: `lib/analysis/severity.ts`, `lib/analysis/citation.ts` and
-`lib/analysis/wording.ts`. They compile, but nothing imports them and they have no tests
-of their own. Ticket 08's Status line lists exactly what remains. They should be read and
-built on, not rewritten.
+- The governing law was read out of the document's own clause 12.1 — England and Wales,
+  carrying the sentence it came from.
+- **7 flags, and 7 of 7 citations verified** by exact string match against the parsed
+  document. On the subagent's run minutes earlier it was 8 of 8. The model is not
+  deterministic about how many ordinary clauses it reports at severity 1; it was
+  deterministic about quoting correctly.
+- Severity came out of the derived properties in every case, with the properties printed
+  beside each flag.
 
-**Two things the next run needs to be told, because a fresh agent cannot infer them:**
+So the structured-output path — schema out, JSON back, `ResponseSchema.parse` accepting
+it — is confirmed working against the real model, which is the one thing the whole
+previous run could not confirm. The provider pin, the environment-read model id, the
+reasoning effort and the JSON schema are all unchanged from your instruction; nothing was
+routed around.
 
-1. **The live model is unreachable.** Every OpenRouter call returns HTTP 429 from the
-   pinned provider's shared pool. Authentication, routing and pricing are all confirmed
-   working — this is purely an upstream shared-limit problem, not a misconfiguration.
-   Adding your own Fireworks key at `https://openrouter.ai/settings/integrations` clears
-   it. Until then `npm run smoke` against the real model cannot be run, and every claim
-   about live model behaviour in this build is untested.
-2. **Supabase has never run.** Per-Signer isolation is designed, not delivered. Apply
-   `supabase/migrations/` to a scratch project, set the three `SUPABASE_TEST_*` variables,
-   and run `npm test` to turn the skipped isolation test green.
+**What is still untested live:** the Q&A refusal path, the checklist examination and the
+summary under a real model. Smoke covers detection, flags, severity and citations.
 
 ---
 
 ## Status
-
-Filled in as tickets complete. See each ticket's own `Status:` line for detail.
 
 | # | Ticket | Status |
 |---|--------|--------|
@@ -64,316 +70,202 @@ Filled in as tickets complete. See each ticket's own `Status:` line for detail.
 | 02 | Settle the hedging trigger | done — ADR 0006 |
 | 03 | Settle how jurisdiction is determined | done — ADR 0007 |
 | 04 | Browser text extraction | done |
-| 05 | Sign-in and per-Signer isolation | 5/7 — blocked on a database |
+| 05 | Sign-in and per-Signer isolation | **5/7 — blocked on a database** |
 | 06 | Fixture corpus and test harness | done |
-| 07 | Analysis seam — plain-English summary | done (live model unreached) |
+| 07 | Analysis seam — plain-English summary | done |
 | 08 | Risk flags — verified citations, derived severity | done — one criterion qualified |
 | 09 | The checked-clean list | done |
-| 10 | Settle remaining checklist thresholds | pending |
-| 11 | Counter-offers | pending |
-| 12 | Document Q&A with refusal | pending |
-| 13 | Red lines as analysis input | pending |
-| 14 | Jurisdiction as explicit input | pending |
-| 15 | The library | pending |
-| 16 | Not-a-lawyer positioning pass | pending |
-| 17 | The landing page | done before this run |
-| 18 | Real analysis output on the landing page | pending |
+| 10 | Settle remaining checklist thresholds | done — ADR 0008 |
+| 11 | Counter-offers | done — sendability part-reviewed |
+| 12 | Document Q&A with refusal | done |
+| 13 | Red lines as analysis input | done — ADR 0009; **isolation unticked** |
+| 14 | Jurisdiction as explicit input | done |
+| 15 | The library | done — ADR 0010; **isolation unticked** |
+| 16 | Not-a-lawyer positioning pass | done — one residual |
+| 17 | The landing page | done before this run — **one criterion open** |
+| 18 | Real analysis output on the landing page | done |
+
+Every ticket is done except **05**, which is blocked on a Supabase project that does not
+exist. Nothing was blocked twice; nothing was worked around.
+
+### The criteria left open, and why
+
+Each is unticked deliberately. A fake green would have been worse than any of them.
+
+1. **05 — RLS enabled, second Signer cannot read the first's rows.** Written, never run.
+2. **05 — the cross-Signer read test.** Real and complete; skips without a database.
+3. **13 — red lines covered by per-Signer isolation.** Same cause.
+4. **15 — library covered by per-Signer isolation.** Same cause.
+5. **13 — red lines persist across documents and sessions** (marked partial). The table,
+   the policies and the read/write path exist, and the app degrades to no red lines when
+   there is no project, no session or a failed query. But persistence has never happened.
+6. **08 — the paired fixtures produce materially different severities** (marked partial).
+   Two of three pairs do, 1 against 3 in both. The third *cannot*: its halves differ only
+   in whether the contract states the restriction is unpaid, and ADR 0006 requires an
+   unstated property to be read at its dangerous end. A severity gap there would mean a
+   hedge had lowered a finding, which the ADR forbids. That pair is asserted to differ in
+   its hedge and `unstatedProperties` instead. **This is the analysis being right, not a
+   gap.**
+7. **11 — counter-offers read as sendable** (marked partial). The mechanical half is
+   asserted. For the prose half I read two of the eighteen drafted messages end to end and
+   both are sendable as they stand; ticket 16's agent then read all eighteen for
+   positioning. Nobody has read all eighteen purely for prose quality.
+
+Plus **17's** open criterion, inherited: the landing page has never been seen at a real
+390px viewport. Chrome refused every window resize in this environment. Ticket 18 put more
+document text on that page than the illustration carried, so the reflow at phone width is
+now more worth a real look than it was. **Do not assume mobile was checked.**
 
 ---
 
 ## Decisions made in your absence
 
-You said to decide rather than ask, and to record the reason. Each of these is a real
-fork where I picked a branch.
+Earlier decisions D1–D18 from the first run stand and are unchanged: model access
+configured not hard-coded, Supabase written but not run, Vitest as the runner, the
+fixture-derived stub, `pdfjs-dist` + `mammoth`, the hedging trigger, jurisdiction
+determination, severity as an integer 1–4, `/review` under an `(app)` route group, paste
+and file as equals, the unreadable state as a type error, the Supabase client choice, and
+`AnalysisResult` as the shape later tickets inherit. What follows is this run.
 
-### D1 — Model access is configured, not hard-coded
+### D19 — Counter-offer wording is written in code, not asked of the model
 
-Per your instruction: OpenRouter's OpenAI-compatible endpoint, `OPENROUTER_MODEL` read
-from the environment, provider pinned to `fireworks` with `allow_fallbacks: false` and
-`require_parameters: true`, reasoning effort `low`, structured JSON output on every
-analysis and answer call. No model id appears in source. This is recorded here because
-`CLAUDE.md` told me to stop and ask about it, and you pre-answered it.
+`lib/analysis/counter-offer.ts` drafts the redraft for all eight clause types at both ends
+of each threshold, reading the contract's own defined terms and clause numbers.
 
-### D2 — Supabase is written but not run
+Reasoning, and the second is the one that decided it. Copy a Signer *sends under their own
+name* has to go through the humanizer before it ships, and prose invented per request has
+not. And had the wording come from the model, then in the suite it would come from the
+stub — so every sendability assertion would have been a test of the stub, which is the
+disqualifier in your own step 5.
 
-No Supabase project exists. Every table and policy is a SQL migration under
-`supabase/migrations/` for you to run by hand. The app boots and analyses a pasted
-document with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` absent;
-only the library and red lines require an account. Auth is never mocked in the product.
-Consequence: **every row-level-security claim in this build is unverified.** Nothing
-here proves isolation works; it proves the policy SQL says it should.
+It is not a fixed string: it reads which properties fired, adapts to the document's party
+labels, and has a separate additive arm for clauses that *protect* the Signer, where
+"replace this" would have asked the Sender to delete their own protection.
 
-### D3 — Test runner is Vitest
+**This is the decision in this run most worth revisiting.** It trades model flexibility for
+reviewability. If you want model-drafted redrafts, the seam is there to hang them on — but
+you lose the humanizer guarantee and the tests get weaker.
 
-`CLAUDE.md` says ask before adding a dependency. Vitest: runs in Node with no browser and
-no network, native TypeScript and ESM, and the watch/single-file ergonomics the ticket
-asks for. Jest needs more configuration to reach the same place on an ESM TypeScript
-Next.js 16 codebase. Recorded because it is a dependency I added without asking.
+### D20 — A red line moves the ranking, not the severity (ADR 0009)
 
-### D4 — The model client is stubbed in tests, from the fixture sidecars
+The ticket said red lines change "severity and ranking". I built ranking only, and recorded
+why in an ADR rather than doing it silently.
 
-The suite runs with no API key. The stub returns payloads built from the fixture sidecar
-JSON, so tests exercise real parsing, real citation verification and real severity
-derivation over known input. What this does *not* test is whether the live model produces
-good analysis — that is what `npm run smoke` is for.
+Severity answers *what does this wording do*; a red line answers *what will I not sign*.
+Folding the second into the first makes "severity, 3 of 4" mean different things on two
+people's screens, and costs severity the defensibility ADR 0003 exists to give it. So the
+order moves, and a new `redLinesCrossed` field carries the reason with the Signer's own
+sentence quoted. ADR 0007's severity-invariance assertions survived untouched; nothing was
+loosened.
 
-### D8 — Vitest 4, not 5, and what that costs you
+The case this buys, which a re-weighting gets wrong and a filter cannot express: a
+three-month, paid, ten-mile restriction stays severity 1 — PRD §5 is explicit that marking
+it higher cries wolf — and still sits first for someone whose note reads "I do not sign
+non-competes."
 
-`vitest@5` peers `@types/node@^22 || >=24`; this repo pins `@types/node@^20`, so npm
-refuses it. Vitest 4.1.11 installs clean against the existing pin, so I took 4 rather
-than bump `@types/node` across the whole repo inside a ticket that was only meant to add
-a test runner. Worth knowing: the local runtime is Node v24.19.0 being typechecked
-against types for Node 20, which was already true before this run. If you want Vitest 5,
-bump `@types/node` first and expect the typecheck surface to move.
+### D21 — A saved reading is the record (ADR 0010)
 
-The config is `vitest.config.mts`, not `.ts`. As `.ts` it printed a CommonJS/ESM
-forward-compatibility warning on every run, and a warning that always fires is one
-everyone learns to scroll past. The `.mts` extension is what the in-repo Next.js 16
-guide recommends anyway. The alternative, `"type": "module"` in `package.json`, would
-have changed module resolution for `next.config.ts` and PostCSS too.
+The spec carried this open. Decided: the saved reading is what a returning Signer sees,
+stored whole, shown with no model call, immutable at the database level. A fresh reading is
+offered beside it, labelled as made just now, and never written down. Which one is on
+screen is stated in three places.
 
-### D5 — Browser parsing uses `pdfjs-dist` and `mammoth`
+A version stamp marking readings stale was the tempting alternative and is rejected in the
+ADR: a marker nobody maintains will tell a Signer their reading is current when nobody
+checked. The date the database already knows cannot lie that way.
 
-Ticket 04 has an acceptance criterion that the parsing dependency "was asked about before
-being added", which `CLAUDE.md` also requires. You were not here, so I chose:
+### D22 — The landing page's sample is stub-derived, and says so
 
-- **`pdfjs-dist`** for PDF. It is Mozilla's own PDF engine, runs entirely in the browser,
-  and does text-layer extraction only — it does no OCR, which is exactly right here.
-  A PDF with no text layer returns no text, which is the signal the unreadable state
-  needs rather than a problem to work around.
-- **`mammoth`** for `.docx`, which is the format freelance contracts actually arrive in.
-- Plain text and pasted text need no dependency.
+`app/page.tsx` shows output from the real `analyze()` seam over a corpus fixture, generated
+ahead of time and committed as data, with a test that fails if the committed file drifts
+from what the analysis produces today.
 
-Both run client-side, so the original file never leaves the machine — the constraint in
-`CLAUDE.md` and story 2. If you want the surface narrower, dropping `mammoth` costs
-`.docx` support and nothing else.
+The artifact is built from the fixture stub, not the live model, because the drift test has
+to reproduce it offline with no key. The page states that in as many words rather than
+implying a live model wrote it, and `producedBy` is a single-arm union so a live
+regeneration would need new copy rather than a quiet swap.
 
-### D6 — Hedging trigger (ticket 02), settled
+Now that the live model is reachable, regenerating from it is a real option — but you would
+be trading the drift test for it. I left the reproducible version in place.
 
-Redline hedges a finding **if and only if** at least one property its severity function
-consumed was not stated in the document. Recorded in full as `docs/adr/0006`.
+### D23 — The four remaining clause thresholds, and how thin their evidence is (ADR 0008)
 
-The reason for this shape: ADR 0003 already makes severity a function of named, extracted
-clause properties, so "is a property missing?" is a fact about the analysis rather than a
-feeling about the output. That makes `hedged === (unstatedProperties.length > 0)` a unit
-test. A trigger resting on the model's self-reported confidence would not have been
-checkable, which is what the ticket forbids.
+One-sided indemnity, uncapped liability, auto-renewal and unilateral change all now have
+thresholds expressed as checkable properties of wording, because the checked-clean list is
+not a real claim while a checklist entry cannot be flagged.
 
-Three bounds stop it drifting into a default hedge: a hedge must name the missing
-property, a hedge never lowers severity or suppresses a flag, and hedging is per-finding
-rather than a document-level banner.
+Evidence strength is recorded **per clause** rather than as a blanket caveat, because the
+four differ enormously. The case worth reading: auto-renewal is the best-evidenced clause
+danger in the whole research and it ranks **2**, because that evidence is consumer
+subscriptions, not freelance retainers. Evidence volume answers whether a clause matters to
+a population, not what one instance costs this Signer. Letting the complaint count set the
+rank is the specific mistake that evidence invites.
 
-### D7 — Jurisdiction determination (ticket 03), settled
+Uncapped liability is marked weakest — PRD §8 says no sourced individual complaint exists —
+and the six-month / thirty-day numbers are labelled calibrations with nothing behind them,
+pinned by a test so changing one is deliberate.
 
-Detected from the document's own governing-law clause, carrying that sentence as evidence;
-overridden by the Signer whenever they say otherwise; `undetermined` when neither, never a
-silent default to US law. Recorded in full as `docs/adr/0007`.
+### D24 — The Q&A seam checks position, not only citation
 
-When it is undetermined the analysis still runs, and degrades in exactly one place:
-severity still stands, because under ADR 0003 it comes from properties of the wording,
-which are textual facts. Only the jurisdiction-dependent legal claims — non-compete
-enforceability, arbitration effect, statutory caps on indemnity, and four others named in
-the ADR — are withheld rather than guessed.
+Found during ticket 16 and fixed there. `lib/analysis/answer.ts` claimed in its own
+docstring that "the prompt asks; the seam enforces", but the seam only ever verified the
+quote. An answer reading "a court would find this unenforceable" reached a Signer
+unchallenged as long as it cited a real sentence — a citation check cannot see that the
+paragraph beside it has nothing to do with the sentence.
 
-### D9 — Severity is an integer 1–4
+That is the DoNotPay failure mode, on the feature nearest that line. Now checked at the
+seam, with the document's own words excised first so a contract containing "unenforceable"
+in its severability clause does not trip it.
 
-`DESIGN.md`'s severity meter is four cells and announces "severity, N of 4", so the scale
-had to be four steps. Mapped from `PRD.md` §5: subjective payment approval 4, IP reaching
-beyond the deliverable and a long/broad/uncompensated non-compete 3, termination for
-convenience with no kill fee 2, present-but-standard 1.
+### D25 — Two defects I fixed during verification rather than passing on
 
-The ordering invariant **4 > 3 > 2** is a test, not a hope — story 12 requires that
-termination for convenience ranks below threats to money already earned. The severity
-*words* (Low / Moderate / High / Severe) are provisional UI copy and must go through the
-humanizer skill when the UI lands; the numbers are the contract.
-
-### D10 — Four judgment calls inside the fixture corpus
-
-1. **`mustBeFlagged` was added to the sidecar shape.** `PRD.md` §5 says a bounded IP
-   assignment is "flagged low or not at all", which a bare severity number cannot express.
-   `expectedSeverity: 1, mustBeFlagged: false` says "1 if flagged, and not flagging it is
-   also correct". Recall tests use `mustBeFlagged`; the paired tests use `expectedSeverity`.
-2. **`ip-assignment` is deliberately absent from `expectedCleanChecklist`** on every
-   fixture with a bounded assignment, because §5 permits flagging it at 1 rather than
-   reporting it clean. Asserting "clean" there would assert something the PRD does not
-   settle. The balanced fixture still lists seven clean entries, so §4 test 4's
-   "populated checklist" half holds.
-3. **The adhesion fixture is standard on the four clauses whose thresholds ticket 10 has
-   not settled** — indemnity, liability cap, renewal, change control. A realistically
-   brutal contract would carry a one-sided indemnity, but planting one would make the
-   fixture depend on a threshold nobody has decided yet.
-4. **The hedging pair carries no governing-law clause but has UK addresses and a UK-wide
-   restriction.** ADR 0007 forbids inferring jurisdiction from a locale, so this fixture
-   exists to catch a detector that guesses. Its sidecar expects `undetermined`.
-
-### D11 — `.gitattributes` was added, which the ticket did not ask for
-
-Git's `core.autocrlf` is on. `unreadable-scan.pdf` contains no NUL bytes, so git
-auto-detects it as text and would rewrite its line endings on checkout, breaking the byte
-offsets in its cross-reference table — this ticket would have shipped a PDF that is
-corrupt for anyone who clones on Windows. The corpus is also compared byte for byte for
-the paired fixtures and the verbatim citations, which the same translation would break.
-`.gitattributes` pins the corpus to LF and marks the PDF binary.
-
-### D12 — The working surface is `/review`, under an `(app)` route group
-
-The landing page keeps `/` and is not touched again until ticket 18. Everything a signed-in
-Signer does lives under `app/(app)/`, with the shell at `app/(app)/layout.tsx` — the target
-the app-shell brief already names — and the working screen at `app/(app)/review/page.tsx`.
-
-Ticket 04 is the first ticket into that group, so it establishes the shell that 05, 07, 08,
-12, 13, 14 and 15 all extend. That is also why 04 and 05 were not run in parallel: both
-would have created the same `layout.tsx`.
-
-### D13 — Bringing a document in: paste and file are equals
-
-The app-shell brief lists this as unresolved. Settled: both paths are offered side by side
-and both produce the same extraction result.
-
-Paste is the path that works with no account, no dependency and no Supabase, which is the
-configuration you asked to be able to run in. Making it a second-class alternative to file
-upload would have meant the only fully-working path in your absence was the degraded one.
-
-### D14 — The unreadable state is a type error, not a convention
-
-`ExtractionResult` is a discriminated union whose `unreadable` arm carries no `text` and no
-`sentences` field at all. I verified this rather than taking it on trust: a probe file that
-reads `result.text` without narrowing on `outcome` fails to compile with
-`TS2339: Property 'text' does not exist on type 'ExtractionResult'`.
-
-This matters more than it sounds. The spec calls an unreadable document presenting as a
-clean bill the worst failure this product can have, and the usual defence is a rule someone
-has to remember. Here a caller that forgets the case does not ship.
-
-Three supporting calls the agent made, all kept:
-- **A 200-character floor.** A scan with a burnt-in header yields a few characters, and
-  analysing almost-nothing is the same failure wearing a disguise. What did come out is
-  shown, so the Signer can see why it was rejected.
-- **Five unreadable reasons, not one.** A password-protected file and a scan need different
-  advice; calling an encrypted contract "damaged" would be wrong. The UI message table is
-  keyed by the reason type, so a new reason without copy will not compile.
-- **PDF line unwrapping.** `splitIntoSentences` ends a sentence at a line break, so a PDF's
-  typesetting would have cut every citation at half a line. The rejoin is conservative —
-  its failure mode is a break left in, never one invented.
-
-### D15 — `/sign-in` is currently a dangling link
-
-`app/page.tsx` (the finished landing page) links to `/sign-in`, which does not exist yet.
-Ticket 05 creates it. Until then the working surface is reachable directly at `/review`
-and runs with the Supabase variables absent, so nothing is blocked — but the landing
-page's call to action is broken in the meantime. If you deploy before ticket 05 lands,
-that link 404s.
-
-### D16 — Supabase client is `@supabase/supabase-js` + `@supabase/ssr`, and auth runs server-side
-
-`CLAUDE.md` requires asking before a dependency. Asked and answered: those two and nothing
-else. `@supabase/ssr` is what makes a session survive closing the tab, because a server
-component can read cookies but cannot write them, so something has to renew an expiring
-token before render.
-
-All auth runs through Server Actions rather than a browser client, so the password never
-enters client state and there is no second session-reading path that can disagree with the
-verified one. Next 16 renamed `middleware.ts` to `proxy.ts`; the matcher is scoped to
-`/review`, `/sign-in` and `/auth` so the deployed landing page keeps its static caching.
-
-### D17 — Two criteria on ticket 05 are deliberately left unticked
-
-This is the most important thing in this report, because it concerns the one guarantee
-`CLAUDE.md` calls non-negotiable: a Signer's documents are theirs alone.
-
-**What is built:** the `documents` table, row level security, and four separate policies
-(one per command rather than one `for all`, so widening any of them later is a visible
-edit). Every policy is scoped to `auth.uid()`. `anon` is additionally revoked, so a
-session-less caller holding the publishable key is refused by two independent mechanisms.
-No column holds bytes, a blob, base64 or a storage-bucket key — only extracted text.
-
-**What is NOT proven:** none of it has ever run. There is no Supabase project, and I
-checked for every alternative — no Docker, no local Postgres, no Supabase CLI, no
-credentials. So:
-- Criterion 3 ("RLS is enabled, and a second Signer's account cannot read the first's
-  rows") is **unticked**. The subagent had ticked it; I reversed that. The policies are
-  written, not enabled — nothing is enabled until you apply the migration.
-- Criterion 4 (the cross-Signer read test) is **unticked**. The test is real and complete
-  — two accounts, nine different read, write and delete attempts, every assertion made
-  through a Signer's own client rather than the service-role one that would bypass RLS.
-  It skips when the three `SUPABASE_TEST_*` variables are absent, printing a banner to
-  stderr that names them and says isolation is not proven. It cannot report green unrun.
-
-**What does run today:** `tests/migrations.test.ts` reads the actual `.sql` files and
-asserts that every table has RLS, every policy is scoped to `auth.uid()`, no policy is
-`using (true)`, and no column could hold a file. I verified it bites by adding a
-deliberately bad migration myself — a `bytea` column, `using (true)`, missing policies —
-and it produced four accurate failures. It is a real check over real artifacts, and it is
-not a substitute for running the isolation test.
-
-**First thing to do when you sit down:** apply the migration to a scratch project, set the
-three `SUPABASE_TEST_*` variables, and run `npm test`. Until that test runs green, treat
-per-Signer isolation as designed rather than delivered.
-
-### D18 — `AnalysisResult` is the shape five later tickets inherit
-
-Built now so 08, 09, 11, 13 and 14 extend it rather than reshape it. Two parts of it are
-structural rather than conventional, which is the point:
-
-- **`sourceSentence` is a required field on a flag.** ADR 0001 says an unsourced flag must
-  be unrepresentable, so it is not an optional annotation someone can forget.
-- **`RiskFlag` is a union distributed over clause type.** `unstatedProperties` on a
-  payment-approval flag cannot contain `"durationMonths"`, because that is not one of the
-  properties payment approval's severity function consumes. ADR 0006's rule that a hedge
-  may only name a property the severity function actually used is therefore a compile
-  error, not a rule someone has to remember.
-
-`flags` and `checkedClean` came back as empty arrays when this decision was made. An empty
-array was the honest answer to "no flag detection has been built yet"; a fabricated flag
-would not be. The screen said so explicitly, because a summary with nothing after it reads
-as a clean bill, which is the failure the spec cares most about. Ticket 08 filled `flags`
-and ticket 09 filled `checkedClean`, both through this shape rather than around it, which
-is what it was built for. `checkedClean` gained a third structural rule on the way: its
-type can only be produced by `clearedList`, which reads the flags, so a clause that was
-flagged cannot also be reported clean.
-
-`counterOffer` is nullable because ticket 08 ships flags before ticket 11 ships
-counter-offers. Null means "not drafted", never a placeholder.
+- **A literal NUL byte** in `lib/analysis/analyze.ts`, used as a dedupe key separator. It
+  made the file register as binary to git and grep, silently losing diffability — the
+  problem commit `e01d12e` had already settled for this repo. Rewritten as an escape.
+- **Three ticket status lines** claiming work was uncommitted after I had committed it, and
+  two criteria ticked more confidently than the evidence supported (13's persistence, 11's
+  sendability). Both downgraded to partial with the reason written in.
 
 ---
 
-## Could not be verified in this run
+## What could not be verified
 
-- **The live model was never reached.** This is the one thing in step 7 I could not do, and
-  the key is not the problem — it works.
+- **Row Level Security, on all three tables.** No Supabase project exists. The policies in
+  `supabase/migrations/` are written with full rigour — RLS enabled, four separate policies
+  per table each scoped to `auth.uid()`, `anon` revoked, `authenticated` named explicitly,
+  cascade to `auth.users`, no column that could hold a file, and a Postgres `check` that
+  makes a stored finding without a source sentence unwritable. `tests/migrations.test.ts`
+  asserts all of that over the actual SQL and was verified to bite by introducing a
+  deliberately bad migration. **None of it has run.**
+  `tests/integration/signer-isolation.test.ts` makes real cross-Signer reads, updates,
+  deletes and inserts across all three tables and skips with a stderr banner naming the
+  three missing variables. It cannot report green unrun.
+- **The live Q&A refusal, checklist and summary paths.** Smoke exercises detection, flags,
+  severity and citations against the live model. The other three seams are exercised
+  against the fixture stub only.
+- **Any viewport.** No browser was opened in this run. The 390px gap DESIGN.md records is
+  unchanged, and slightly wider after ticket 18.
+- **`summary.plainEnglish` positioning.** Ticket 16's one residual. It is model prose whose
+  only guard is a prompt rule, because the three analysis calls run under `Promise.all` and
+  refusing a summary would take the flags and checklist down with it. It is the one
+  Signer-facing surface that is neither sentence-cited nor seam-checked. That was true
+  before this run too.
 
-  Every call to the pinned provider returns **HTTP 429**: *"temporarily rate-limited
-  upstream… limit_source: upstream_provider_shared_pool, is_byok: false"*. The subagent
-  retried 25 times across about 32 minutes; I then confirmed it independently with my own
-  single request. What this tells us is quite specific, because the failure is not a 401 or
-  a 404:
-  - authentication works
-  - the request routes to the pinned Fireworks provider correctly
-  - the request is priced correctly (an earlier attempt returned a 402 naming the token
-    budget, which is why `max_tokens: 4096` is now set — without it the request reserves
-    the model's whole completion window and is refused outright)
+---
 
-  So the integration is proven right up to the provider boundary. What remains unproven is
-  the **structured-output response path**: whether the model returns JSON matching the
-  schema, and whether `ResponseSchema.parse` accepts it. That path is exercised against the
-  fixture stub only.
+## Where the guarantees actually live
 
-  **The remedy, in your hands:** the account is using OpenRouter's shared Fireworks pool.
-  Adding your own Fireworks key at `https://openrouter.ai/settings/integrations` moves you
-  off the shared limit. I did **not** set `allow_fallbacks: true` or route to another
-  provider, because you pinned the provider deliberately and told me not to invent a way
-  around a blocker.
+Worth knowing, because several are enforced by the compiler rather than by discipline, so a
+future change will fail to build rather than fail quietly:
 
-  Until one real call succeeds, treat every claim about live model behaviour in this build
-  as untested. The seam's shape, its error handling and its refusal to invent a Sender are
-  all tested; what the model actually returns is not.
-
-
-- **Row Level Security.** No Supabase project exists, so the policies in
-  `supabase/migrations/` are unrun and untested. The isolation claim in `CLAUDE.md` is
-  written, not proven.
-- **The landing page at a real 390px viewport.** Ticket 17's last open criterion, and a
-  KNOWN GAP already recorded at the foot of `DESIGN.md`: Chrome refused every window
-  resize in this environment, so the narrow-width evidence on file is a simulation that
-  renders the h1 at the wrong size. I did not re-attempt it and did not mark the criterion
-  done. Do not assume mobile was checked.
+- A flag without its source sentence is unrepresentable — `sourceSentence` is required.
+- A refusal cannot carry a citation — the refused arm has no such field, and an
+  `@ts-expect-error` in the suite makes `tsc` the enforcer.
+- A flagged entry cannot be reported clean — `ClearedChecklist` is branded and
+  `clearedList`, which reads the flags, is its only constructor. Across a database round
+  trip it is *rebuilt* rather than re-asserted.
+- An unreadable document cannot be analysed — the unreadable arm carries no `text` field.
+- A hedge can only name a property its clause type's severity function consumes —
+  `unstatedProperties` is typed to that clause type.
+- Adding a clause type without handling it everywhere does not compile — three exhaustive
+  switches proved this during ticket 10.

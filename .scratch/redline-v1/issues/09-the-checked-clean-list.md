@@ -18,7 +18,7 @@ not having looked at all. Both halves have to hold.
 
 **Blocked by:** 08
 
-**Status:** implemented, uncommitted. `analyze()` makes a third gateway call, a checklist
+**Status:** done — 2026-09-14. `analyze()` makes a third gateway call, a checklist examination
 examination covering all eight entries, and `checkedClean` is derived from it and the
 flags together by `lib/analysis/checklist.ts`. The review screen renders the cleared list
 per `DESIGN.md`. `npx tsc --noEmit`, `npm test` (157 passing, the Supabase isolation test
