@@ -47,3 +47,17 @@ misread.
 ## Read before building
 - research/summary.md — the user research behind these decisions.
 - PRD.md (once it exists) — the brief.
+
+## Who you are writing for
+The person who owns this product is a product manager, not an engineer. They do not
+read code and do not use a terminal.
+
+Write every explanation so a ten-year-old could follow it, and explain each technical
+term the first time it comes up — including the ones that feel too obvious to mention.
+Say what a command does and where it gets typed before you give the command. Prefer a
+link or a dashboard page over a terminal command whenever both would work. When a
+command really is the only route, offer it as `! <command>` so it runs here rather than
+asking them to open a terminal.
+
+Simple wording, not less information. They make real decisions from these answers, so
+keep the trade-offs and the caveats — just say them plainly.
