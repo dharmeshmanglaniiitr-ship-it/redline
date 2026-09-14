@@ -26,6 +26,12 @@ const COST_OF: Record<string, string> = {
   "non-compete": "the kind of work you do now is closed off after this engagement ends",
   "termination-for-convenience":
     "the rest of the engagement can disappear with nothing payable for it",
+  "one-sided-indemnity":
+    "a claim someone else brings lands on you, and nothing runs back the other way",
+  "uncapped-liability":
+    "what this could cost you is not held to what the engagement is worth",
+  "auto-renewal": "another term starts by itself unless you catch the date it turns on",
+  "unilateral-change": "the fee and the work can be rewritten after you have signed",
 };
 
 export function createStubModelGateway(fixture: Fixture): ModelGateway {

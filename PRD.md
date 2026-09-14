@@ -237,11 +237,13 @@ enforceability reasoning here is jurisdiction-dependent and must not be stated a
 universal (`docs/adr/0005`, and `docs/adr/0007` for the list of claims that rule
 covers).
 
-### In the checklist, thresholds not yet set
+### In the checklist, thresholds settled later
 
 These must be in the checked-and-clean list (§3 item 4, §4 test 4) or the clean bill
-is not a real claim. Their dangerous-vs-standard thresholds are not yet defined and
-need the same treatment as the four above:
+is not a real claim. Their dangerous-vs-standard thresholds were not set here and were
+settled afterwards in `docs/adr/0008`, which gives each one the same treatment as the
+four above and records the evidence behind it — including, for two of them, that there
+is barely any. What this section records is the evidence as the research left it:
 
 - **One-sided indemnity** — the freelancer indemnifies the client but not vice versa.
   Sourced as a recurring freelancer red flag

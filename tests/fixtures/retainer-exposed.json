@@ -1,0 +1,80 @@
+{
+  "fixture": "retainer-exposed.txt",
+  "description": "A monthly content retainer carrying the four clause types docs/adr/0008 settles, each at its dangerous threshold: a renewal that locks in another year behind a ninety-day window, a power to change the fee and the work without the Contractor's agreement, an indemnity that fires whoever caused the loss and sits outside the liability limit, and a ceiling that protects the Client only. The four clause types PRD.md §5 settled are deliberately present in their fair form, so nothing flagged here comes from language the first four thresholds cover. retainer-bounded.txt is the same contract with those four lines replaced by standard ones.",
+  "sender": "Thornbury Analytics Limited",
+  "engagement": "A continuing monthly content retainer of €2,400 a month covering articles, briefing notes and release copy, beginning 2 March 2026.",
+  "jurisdiction": {
+    "expected": "Ireland",
+    "sourceSentence": "13.1 This Agreement and any dispute arising out of or in connection with it are governed by the laws of Ireland, and the parties submit to the exclusive jurisdiction of the Irish courts."
+  },
+  "planted": [
+    {
+      "id": "renewal-locked",
+      "clauseType": "auto-renewal",
+      "sourceSentence": "3.1 This Agreement renews automatically for a further term of twelve (12) months at the end of each term unless the Contractor gives written notice of non-renewal no later than ninety (90) days before the end of the then-current term, and the Contractor may not end a renewed term before it expires.",
+      "expectedSeverity": 2,
+      "mustBeFlagged": true,
+      "properties": {
+        "renewalTermMonths": 12,
+        "noticeWindowDays": 90,
+        "terminableDuringRenewal": false
+      },
+      "unstatedProperties": [],
+      "expectedHedged": false,
+      "why": "ADR 0008: all three triggers fire — a renewal committing twelve months, a window demanding notice a quarter before the end, and no way out part-way through. Severity 2, beside termination for convenience, because it costs future income rather than money already earned."
+    },
+    {
+      "id": "change-unilateral",
+      "clauseType": "unilateral-change",
+      "sourceSentence": "5.1 The Client may change the monthly fee, the Services or any other term of this Agreement by giving the Contractor fourteen (14) days' written notice, the change takes effect without the Contractor's agreement, and the Contractor may not end this Agreement on account of it.",
+      "expectedSeverity": 3,
+      "mustBeFlagged": true,
+      "properties": {
+        "changeRequiresSignerAgreement": false,
+        "whatMayChange": "the monthly fee, the Services or any other term of this Agreement",
+        "exitOnChange": false
+      },
+      "unstatedProperties": [],
+      "expectedHedged": false,
+      "why": "ADR 0008: the power to change reaches the money and the work, which is the bargain being rewritten after it was struck, so 3 rather than 2. No signature is needed and no exit is offered."
+    },
+    {
+      "id": "indemnity-uncapped",
+      "clauseType": "one-sided-indemnity",
+      "sourceSentence": "9.1 The Contractor shall indemnify the Client against all claims, losses, damages, costs and expenses of any kind arising out of or in connection with the Services, whether or not the Contractor caused them, and this indemnity is not subject to any limit of liability in this Agreement.",
+      "expectedSeverity": 3,
+      "mustBeFlagged": true,
+      "properties": {
+        "mutual": false,
+        "triggeringClaims": "any claim arising out of or in connection with the Services, whether or not the Contractor caused it",
+        "cappedByLiabilityLimit": false
+      },
+      "unstatedProperties": [],
+      "expectedHedged": false,
+      "why": "ADR 0008: the promise reaches past trouble the Contractor caused and is carved out of the liability limit, so 3. One-sidedness alone would be 2 — the ordinary freelance indemnity runs one way and is not the dangerous case."
+    },
+    {
+      "id": "liability-uncapped",
+      "clauseType": "uncapped-liability",
+      "sourceSentence": "9.2 The liability of the Client under this Agreement is limited to the fees paid in the three (3) months before the claim arose, and no limit of any kind applies to the liability of the Contractor.",
+      "expectedSeverity": 3,
+      "mustBeFlagged": true,
+      "properties": { "liabilityCap": "none", "capAppliesToSigner": false },
+      "unstatedProperties": ["capProportionateToFee"],
+      "expectedHedged": true,
+      "why": "ADR 0008: the ceiling exists and covers the Client only, so what the Contractor could be made to pay is not held to what the job is worth. The contract cannot say how a ceiling compares with the fee when the Contractor has no ceiling, so that property is unstated and the finding is hedged at the same severity (ADR 0006)."
+    }
+  ],
+  "expectedCleanChecklist": [
+    "payment-approval",
+    "ip-assignment",
+    "non-compete",
+    "termination-for-convenience"
+  ],
+  "unanswerableQuestions": [
+    "What happens to the retainer if Thornbury Analytics becomes insolvent midway through a term?",
+    "May the Contractor bring in a subeditor to cover a busy month?",
+    "Does the Contractor keep a byline on the published articles?",
+    "Who pays for stock photography used alongside an article?"
+  ]
+}

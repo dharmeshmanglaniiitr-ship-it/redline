@@ -30,18 +30,24 @@ import { LABEL, ProofMark, SeverityMeter, type MarkKind } from "../_components/g
 /**
  * Which proof mark each kind of finding carries.
  *
- * A strike is a deletion, and subjective payment approval is the clause a Signer most
- * often needs struck out rather than narrowed. A caret is an insertion, for the two
- * clauses that are fixed by putting a bound into them — where the assignment stops, how
- * far the restriction reaches. A query is the mark for something to take up, which is
- * what an early exit with nothing payable is. The same glyph appears on both halves of
- * the pair; that is what makes them one mark.
+ * A strike is a deletion, for the clauses a Signer most often needs struck out rather
+ * than narrowed: payment left to the client's satisfaction, and a power to rewrite the
+ * terms after signing. A caret is an insertion, for the clauses that are fixed by
+ * putting a bound into them — where the assignment stops, how far the restriction
+ * reaches, what sets an indemnity off, what the ceiling on liability is. A query is the
+ * mark for something to take up, which is what an early exit with nothing payable and a
+ * term that renews itself both are. The same glyph appears on both halves of the pair;
+ * that is what makes them one mark.
  */
 const MARK_OF: Record<ClauseType, MarkKind> = {
   "payment-approval": "strike",
   "ip-assignment": "caret",
   "non-compete": "caret",
   "termination-for-convenience": "query",
+  "one-sided-indemnity": "caret",
+  "uncapped-liability": "caret",
+  "auto-renewal": "query",
+  "unilateral-change": "strike",
 };
 
 interface Leader {

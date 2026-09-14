@@ -137,7 +137,11 @@ compensated; for IP assignment, whether it reaches beyond the engagement's deliv
 for payment terms, whether an acceptance standard is objective or left to the Sender's
 judgment — and severity is a function of those properties. This makes severity
 explainable and testable at the seam, and it is what makes ADR 0003 real rather than
-aspirational.
+aspirational. All eight checklist entries now have such a threshold: the four `PRD.md`
+§5 settles, and the four ADR 0008 settles — one-sided indemnity, uncapped liability,
+auto-renewal, and unilateral rate or scope change. ADR 0008 also records how thin the
+evidence behind the second four is, which is part of the decision rather than a caveat
+on it.
 
 **The checked-clean list is data, not prose.** v1 carries a defined clause checklist
 for freelance contracts. The analysis reports which checklist entries it examined and
@@ -261,12 +265,6 @@ drafts language; it does not advise whether to sign. DoNotPay settled FTC charge
 $193,000 plus a ban on advertising itself as a lawyer substitute
 (https://www.abajournal.com/news/article/robot-lawyer-website-donotpay-settles-ftc-claims-it-couldnt-deliver-on-promises),
 and Redline's counter-offer and Q&A features sit closest to that line.
-
-**Severity thresholds for four checklist clauses.** One-sided indemnity, uncapped
-liability, auto-renewal, and unilateral rate or scope change are named in `PRD.md` §5
-as checklist members whose dangerous-vs-standard thresholds are not settled. They
-belong in the checked-clean list, but this spec does not define their severity rules —
-that needs the same treatment the first four clauses got.
 
 Version diffing between contract drafts. Not among the ten capabilities; would need
 to be asked about before building (`CLAUDE.md`).

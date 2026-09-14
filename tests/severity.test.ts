@@ -203,6 +203,242 @@ describe("deriveSeverity", () => {
     });
   });
 
+  describe("one-sided indemnity", () => {
+    const confined = {
+      mutual: true,
+      triggeringClaims:
+        "a third-party claim to the extent that it arises from that party's own breach",
+      cappedByLiabilityLimit: true,
+    } as const;
+
+    it("does not cry wolf on a mutual promise confined to each party's own fault", () => {
+      const fair: ClauseReading = { clauseType: "one-sided-indemnity", properties: confined };
+      expect(severityTriggers(fair)).toEqual([]);
+      expect(deriveSeverity(fair)).toBe(1);
+    });
+
+    it("flags a promise that runs one way, without calling it the dangerous case", () => {
+      // `docs/adr/0008`: an indemnity running only towards the client, held to the
+      // signer's own fault and inside the ceiling, is the ordinary freelance shape.
+      // Worth knowing about, and marking it 3 would train a Signer to ignore the 3s.
+      const oneWay: ClauseReading = {
+        clauseType: "one-sided-indemnity",
+        properties: { ...confined, mutual: false },
+      };
+      expect(severityTriggers(oneWay)).toEqual(["mutual"]);
+      expect(deriveSeverity(oneWay)).toBe(2);
+    });
+
+    it.each([
+      [
+        "a promise that fires whoever caused the loss",
+        {
+          triggeringClaims:
+            "any claim connected with the Services, whether or not the Contractor caused it",
+        },
+        "triggeringClaims",
+      ],
+      [
+        "a promise carved out of the liability ceiling",
+        { cappedByLiabilityLimit: false },
+        "cappedByLiabilityLimit",
+      ],
+    ])("marks %s high on its own", (_case, widened, trigger) => {
+      const reading: ClauseReading = {
+        clauseType: "one-sided-indemnity",
+        properties: { ...confined, ...widened },
+      };
+      expect(severityTriggers(reading)).toEqual([trigger]);
+      expect(deriveSeverity(reading)).toBe(3);
+    });
+
+    it("does not let a confinement that is taken back count as a confinement", () => {
+      // "to the extent" states a bound, "regardless of fault" removes it. Wording
+      // Redline cannot read as confined is read as reaching.
+      const reading: ClauseReading = {
+        clauseType: "one-sided-indemnity",
+        properties: {
+          ...confined,
+          triggeringClaims:
+            "a claim to the extent it arises from the Services, regardless of fault",
+        },
+      };
+      expect(severityTriggers(reading)).toEqual(["triggeringClaims"]);
+    });
+
+    it("reads a contract silent on all three at the dangerous end", () => {
+      const silent: ClauseReading = { clauseType: "one-sided-indemnity", properties: {} };
+      expect(deriveSeverity(silent)).toBe(3);
+      expect([...severityTriggers(silent)].sort()).toEqual(
+        [...SEVERITY_PROPERTIES["one-sided-indemnity"]].sort()
+      );
+    });
+  });
+
+  describe("uncapped liability", () => {
+    const bounded = {
+      liabilityCap: "the total fees payable in the twelve months before the claim",
+      capAppliesToSigner: true,
+      capProportionateToFee: true,
+    } as const;
+
+    it("reads a real ceiling as a ceiling rather than fearing the clause", () => {
+      const capped: ClauseReading = { clauseType: "uncapped-liability", properties: bounded };
+      expect(severityTriggers(capped)).toEqual([]);
+      expect(deriveSeverity(capped)).toBe(1);
+    });
+
+    it.each([
+      ["no ceiling at all", { liabilityCap: "none" }, "liabilityCap"],
+      ["a ceiling in words only", { liabilityCap: "unlimited" }, "liabilityCap"],
+      ["a ceiling that covers the client alone", { capAppliesToSigner: false }, "capAppliesToSigner"],
+      [
+        "a figure unrelated to the job",
+        { capProportionateToFee: false },
+        "capProportionateToFee",
+      ],
+    ])("marks %s high on its own", (_case, widened, trigger) => {
+      const reading: ClauseReading = {
+        clauseType: "uncapped-liability",
+        properties: { ...bounded, ...widened },
+      };
+      expect(severityTriggers(reading)).toEqual([trigger]);
+      expect(deriveSeverity(reading)).toBe(3);
+    });
+
+    it("ranks an open-ended exposure below withheld payment, not beside it", () => {
+      // `docs/adr/0008`: this is a contingent exposure. Subjective payment approval is a
+      // certainty about money already handed over, and `PRD.md` §5 keeps 4 for it.
+      const open: ClauseReading = {
+        clauseType: "uncapped-liability",
+        properties: { liabilityCap: "none" },
+      };
+      const withheld: ClauseReading = {
+        clauseType: "payment-approval",
+        properties: { acceptanceStandard: "subjective" },
+      };
+      expect(deriveSeverity(open)).toBeLessThan(deriveSeverity(withheld));
+    });
+  });
+
+  describe("auto-renewal", () => {
+    const rolling = {
+      renewalTermMonths: 1,
+      noticeWindowDays: 14,
+      terminableDuringRenewal: true,
+    } as const;
+
+    it("leaves an arrangement that rolls on in short steps alone", () => {
+      const reading: ClauseReading = { clauseType: "auto-renewal", properties: rolling };
+      expect(severityTriggers(reading)).toEqual([]);
+      expect(deriveSeverity(reading)).toBe(1);
+    });
+
+    it.each([
+      ["a renewal that commits another year", { renewalTermMonths: 12 }, "renewalTermMonths"],
+      ["a window that opens a quarter early", { noticeWindowDays: 90 }, "noticeWindowDays"],
+      [
+        "a renewed term with no way out",
+        { terminableDuringRenewal: false },
+        "terminableDuringRenewal",
+      ],
+    ])("flags %s on its own", (_case, widened, trigger) => {
+      const reading: ClauseReading = {
+        clauseType: "auto-renewal",
+        properties: { ...rolling, ...widened },
+      };
+      expect(severityTriggers(reading)).toEqual([trigger]);
+      expect(deriveSeverity(reading)).toBe(2);
+    });
+
+    it("holds six months inside the window and thirty days' notice outside the trap", () => {
+      // The two calibrations `docs/adr/0008` records as choices rather than findings.
+      // They are asserted here so changing one is a deliberate act with a failing test
+      // behind it, not a quiet edit to a regular expression.
+      const atTheLine: ClauseReading = {
+        clauseType: "auto-renewal",
+        properties: { ...rolling, renewalTermMonths: 6, noticeWindowDays: 30 },
+      };
+      expect(severityTriggers(atTheLine)).toEqual([]);
+    });
+
+    it("ranks a renewal beside an early exit, not above it", () => {
+      const locked: ClauseReading = {
+        clauseType: "auto-renewal",
+        properties: { ...rolling, renewalTermMonths: 12 },
+      };
+      const noKillFee: ClauseReading = {
+        clauseType: "termination-for-convenience",
+        properties: { killFee: "absent" },
+      };
+      expect(deriveSeverity(locked)).toBe(deriveSeverity(noKillFee));
+    });
+  });
+
+  describe("unilateral change", () => {
+    it("reads a change-order clause as the thing a fair contract has", () => {
+      const changeOrder: ClauseReading = {
+        clauseType: "unilateral-change",
+        properties: {
+          changeRequiresSignerAgreement: true,
+          whatMayChange: "the monthly fee, the Services or any other term",
+          exitOnChange: true,
+        },
+      };
+      expect(severityTriggers(changeOrder)).toEqual([]);
+      expect(deriveSeverity(changeOrder)).toBe(1);
+    });
+
+    it("does not flag a change-order clause for listing the fee among what can change", () => {
+      // The gate that stops this clause type flagging every contract that has a changes
+      // section. What may change matters only once it can change without a signature.
+      const signedOnly: ClauseReading = {
+        clauseType: "unilateral-change",
+        properties: { changeRequiresSignerAgreement: true },
+      };
+      expect(severityTriggers(signedOnly)).toEqual([]);
+      expect(deriveSeverity(signedOnly)).toBe(1);
+      // Still hedged: the gap is real and named, it just does not move the mark
+      // (`docs/adr/0006` — a hedge is about the basis of a finding, not its rank).
+      expect(unstatedPropertiesOf("unilateral-change", signedOnly.properties)).toEqual([
+        "whatMayChange",
+        "exitOnChange",
+      ]);
+    });
+
+    it("marks a power over the money and the work above a power over operating detail", () => {
+      const overTheFee: ClauseReading = {
+        clauseType: "unilateral-change",
+        properties: {
+          changeRequiresSignerAgreement: false,
+          whatMayChange: "the monthly fee or the Services",
+          exitOnChange: false,
+        },
+      };
+      const overDetail: ClauseReading = {
+        clauseType: "unilateral-change",
+        properties: {
+          changeRequiresSignerAgreement: false,
+          whatMayChange: "the brand guidelines and the address invoices are sent to",
+          exitOnChange: false,
+        },
+      };
+
+      expect(severityTriggers(overTheFee)).toContain("whatMayChange");
+      expect(deriveSeverity(overTheFee)).toBe(3);
+      expect(severityTriggers(overDetail)).not.toContain("whatMayChange");
+      expect(deriveSeverity(overDetail)).toBe(2);
+    });
+
+    it("reads a contract silent on all three at the dangerous end", () => {
+      const silent: ClauseReading = { clauseType: "unilateral-change", properties: {} };
+      expect(deriveSeverity(silent)).toBe(3);
+      expect([...severityTriggers(silent)].sort()).toEqual(
+        [...SEVERITY_PROPERTIES["unilateral-change"]].sort()
+      );
+    });
+  });
+
   it("accounts for every property its clause type consumes, and no others", () => {
     // `docs/adr/0006` lets a hedge name only a property the severity function read.
     // Splitting stated from unstated has to cover the whole list and nothing outside it,

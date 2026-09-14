@@ -25,15 +25,26 @@ subscriptions, not freelance retainers.
 
 **Blocked by:** 09
 
-**Status:** ready-for-agent
+**Status:** implemented, uncommitted. `docs/adr/0008` records all four thresholds. The
+four clause types are in `SETTLED_CLAUSE_TYPES` with their properties, `deriveSeverity`
+and `severityTriggers` read them, `analyze()`'s `flagFrom` switch has an arm each, and
+two new corpus fixtures — `retainer-exposed.txt` and `retainer-bounded.txt`, identical
+except at the four planted clauses — carry both ends of every threshold. The live model
+is still unreachable, so none of this has been run against a real model.
 
-- [ ] Each of the four clause types has a stated threshold distinguishing a dangerous
+- [x] Each of the four clause types has a stated threshold distinguishing a dangerous
       instance from a standard one, expressed as properties of the wording
-- [ ] Each threshold states where the clause ranks relative to the four already settled,
-      and why
-- [ ] Jurisdiction-dependent reasoning is marked as such rather than asserted universally
-- [ ] Fixtures are added to the corpus for each, including the standard-instance case
-      that must *not* be flagged high
-- [ ] The four clause types move out of the spec's Out of Scope section
-- [ ] Where a threshold rests on thin evidence, that is recorded rather than presented as
-      settled fact
+      (`docs/adr/0008`, `lib/analysis/clauses.ts`, `lib/analysis/severity.ts`)
+- [x] Each threshold states where the clause ranks relative to the four already settled,
+      and why (`docs/adr/0008`, and `deriveSeverity`'s docblock)
+- [x] Jurisdiction-dependent reasoning is marked as such rather than asserted universally
+      (`lawDecides` in `lib/analysis/wording.ts`; the unilateral change deliberately
+      makes no legal claim, which ADR 0008 records as a decision rather than an omission)
+- [x] Fixtures are added to the corpus for each, including the standard-instance case
+      that must *not* be flagged high (`retainer-bounded.txt`, all four at severity 1
+      with `mustBeFlagged` false)
+- [x] The four clause types move out of the spec's Out of Scope section
+- [x] Where a threshold rests on thin evidence, that is recorded rather than presented as
+      settled fact (`docs/adr/0008`, per clause: weak for the indemnity, weakest for
+      uncapped liability, thinnest of all for unilateral change, and strong-but-about-
+      consumers for auto-renewal)

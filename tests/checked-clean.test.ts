@@ -234,4 +234,50 @@ describe("the checked-clean list", () => {
       CHECKLIST_ENTRIES.filter((entry) => entry !== planted.clauseType)
     );
   });
+
+  it("lets a finding overturn a clean claim on the four entries that could not make one", async () => {
+    // Ticket 09 shipped these four as checklist members with no severity rule, which left
+    // a hole it recorded honestly: a clause found under one of them landed in neither
+    // list, because there was no flag to contradict the clean claim with.
+    // `docs/adr/0008` closes it, and this is the half that has to be shown rather than
+    // asserted — `clearedList` subtracts these the same way it subtracts the others, with
+    // no change to `lib/analysis/checklist.ts`.
+    const fixture = loadFixture("retainer-exposed.txt");
+    const settledLate: readonly ChecklistEntry[] = [
+      "one-sided-indemnity",
+      "uncapped-liability",
+      "auto-renewal",
+      "unilateral-change",
+    ];
+
+    for (const entry of settledLate) {
+      const planted = fixture.sidecar.planted.find((clause) => clause.clauseType === entry);
+      if (planted === undefined) throw new Error(`nothing planted under ${entry}`);
+
+      // The examination says all eight are clear. The flags pass, reading the same
+      // contract, finds this one.
+      const result = await analyze(
+        {
+          documentText: fixture.text,
+          redLines: NO_RED_LINES,
+          jurisdiction: UNDETERMINED_JURISDICTION,
+        },
+        gatewayAnswering("retainer-exposed.txt", {
+          findings: [
+            {
+              clauseType: planted.clauseType,
+              sourceSentence: planted.sourceSentence,
+              properties: { ...planted.properties },
+            },
+          ],
+        })
+      );
+
+      expect(result.flags.map((flag) => flag.clauseType), entry).toEqual([entry]);
+      expect(result.checkedClean, entry).not.toContain(entry);
+      expect([...result.checkedClean], entry).toEqual(
+        CHECKLIST_ENTRIES.filter((name) => name !== entry)
+      );
+    }
+  });
 });

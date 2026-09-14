@@ -86,6 +86,38 @@ describe("the fixture corpus", () => {
     expect(dangerous.get("ip-assignment")).toBe(3);
     expect(dangerous.get("non-compete")).toBe(3);
     expect(dangerous.get("termination-for-convenience")).toBe(2);
+    // The four `docs/adr/0008` settles, at the ranks that ADR argues for.
+    expect(dangerous.get("one-sided-indemnity")).toBe(3);
+    expect(dangerous.get("uncapped-liability")).toBe(3);
+    expect(dangerous.get("unilateral-change")).toBe(3);
+    expect(dangerous.get("auto-renewal")).toBe(2);
+  });
+
+  it("plants a standard instance of every settled clause type, not only a dangerous one", () => {
+    // The other half of `docs/adr/0003`, and the half a corpus of aggressive contracts
+    // quietly loses: a threshold that only ever sees the dangerous end is indistinguishable
+    // from a category lookup. Every clause type needs an instance the corpus says may go
+    // unflagged, or nothing in the suite can fail when severity stops discriminating.
+    const standard = new Set<ClauseType>();
+    for (const fixture of fixtures) {
+      for (const clause of fixture.sidecar.planted) {
+        if (!clause.mustBeFlagged && clause.expectedSeverity === 1) {
+          standard.add(clause.clauseType);
+        }
+      }
+    }
+    // Payment approval and termination for convenience are cleared rather than planted
+    // low in the corpus as it stands; the rest carry a planted standard instance.
+    for (const clauseType of [
+      "ip-assignment",
+      "non-compete",
+      "one-sided-indemnity",
+      "uncapped-liability",
+      "auto-renewal",
+      "unilateral-change",
+    ] as const) {
+      expect(standard, clauseType).toContain(clauseType);
+    }
   });
 
   it("keeps the sidecar's hedge in step with what the document leaves unstated", () => {
@@ -244,6 +276,69 @@ describe("the paired fixtures", () => {
     // ADR 0006: a hedge is a statement about the basis of a finding, never a softening
     // of it. The unstated property is assumed at its dangerous end, so severity holds.
     expect(silent.expectedSeverity).toBe(stated.expectedSeverity);
+  });
+});
+
+describe("the retainer pair", () => {
+  // Not in `FIXTURE_PAIRS`, because these two differ in four lines rather than one: they
+  // carry all four of the clause types `docs/adr/0008` settles, so isolating each one in
+  // its own pair would mean eight more contracts to say the same thing. The one-line
+  // discipline is kept in the assertion instead — every line that differs is a planted
+  // sentence, so nothing else about the two documents can be behind a difference in the
+  // reading.
+  const exposed = loadFixture("retainer-exposed.txt");
+  const bounded = loadFixture("retainer-bounded.txt");
+
+  it("differs only where the planted clauses sit", () => {
+    const left = linesOf("retainer-exposed.txt");
+    const right = linesOf("retainer-bounded.txt");
+    expect(left.length).toBe(right.length);
+
+    const differing = left
+      .map((line, index) => (line === right[index] ? -1 : index))
+      .filter((index) => index >= 0);
+    expect(differing).toHaveLength(4);
+
+    for (const index of differing) {
+      expect(exposed.sidecar.planted.map((clause) => clause.sourceSentence)).toContain(
+        left[index]
+      );
+      expect(bounded.sidecar.planted.map((clause) => clause.sourceSentence)).toContain(
+        right[index]
+      );
+    }
+  });
+
+  it("reads the same four clause types at opposite ends of each threshold", () => {
+    const byType = (fixture: typeof exposed) =>
+      new Map(fixture.sidecar.planted.map((clause) => [clause.clauseType, clause]));
+    const high = byType(exposed);
+    const low = byType(bounded);
+
+    expect([...high.keys()].sort()).toEqual([...low.keys()].sort());
+    for (const [clauseType, dangerous] of high) {
+      const standard = low.get(clauseType);
+      if (standard === undefined) throw new Error(`the pair lost ${clauseType}`);
+      expectRanksAbove(
+        { severity: dangerous.expectedSeverity },
+        { severity: standard.expectedSeverity }
+      );
+      expect(dangerous.mustBeFlagged, clauseType).toBe(true);
+      // The point of the standard half: going unflagged is a correct answer for it.
+      expect(standard.mustBeFlagged, clauseType).toBe(false);
+      expect(standard.expectedSeverity, clauseType).toBe(1);
+    }
+  });
+
+  it("hedges the ceiling the exposed half never sets, and nothing else", () => {
+    // `docs/adr/0006` on one of the newly settled types: a contract that gives the
+    // Contractor no ceiling at all cannot say how that ceiling compares with the fee, so
+    // the property is unstated, the hedge names it, and the severity does not move.
+    const hedged = exposed.sidecar.planted.filter((clause) => clause.expectedHedged);
+    expect(hedged.map((clause) => clause.id)).toEqual(["liability-uncapped"]);
+    expect(hedged[0].unstatedProperties).toEqual(["capProportionateToFee"]);
+    expect(hedged[0].expectedSeverity).toBe(3);
+    expect(bounded.sidecar.planted.every((clause) => !clause.expectedHedged)).toBe(true);
   });
 });
 

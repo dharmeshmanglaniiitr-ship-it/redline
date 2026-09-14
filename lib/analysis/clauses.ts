@@ -31,15 +31,26 @@ export const CHECKLIST_ENTRIES = [
 export type ChecklistEntry = (typeof CHECKLIST_ENTRIES)[number];
 
 /**
- * The four clause types whose dangerous-vs-standard thresholds `PRD.md` §5 settles. The
- * other four checklist entries are checked but have no settled severity rule yet
- * (`docs/spec-v1.md`, Out of Scope), so nothing is flagged under them.
+ * The clause types whose dangerous-vs-standard thresholds are settled, and which the
+ * analysis can therefore flag. `PRD.md` §5 settled the first four; `docs/adr/0008`
+ * settles the remaining four, so this list and the checklist now hold the same eight.
+ *
+ * They stay two lists rather than one. A clause type earns its way onto the checklist by
+ * being worth examining, and onto this list by having a rule for what a dangerous
+ * instance of it says — two different claims, made at two different times, and the gap
+ * between them is where a new entry sits while its threshold is being worked out. A
+ * checklist entry that is not here is examined and can be reported clean, but nothing is
+ * ever flagged under it.
  */
 export const SETTLED_CLAUSE_TYPES = [
   "payment-approval",
   "ip-assignment",
   "non-compete",
   "termination-for-convenience",
+  "one-sided-indemnity",
+  "uncapped-liability",
+  "auto-renewal",
+  "unilateral-change",
 ] as const;
 
 export type ClauseType = (typeof SETTLED_CLAUSE_TYPES)[number];
@@ -54,6 +65,10 @@ export const SEVERITY_PROPERTIES = {
   "ip-assignment": ["reachesBeyondDeliverable"],
   "non-compete": ["durationMonths", "geographicScope", "industryScope", "compensated"],
   "termination-for-convenience": ["killFee"],
+  "one-sided-indemnity": ["mutual", "triggeringClaims", "cappedByLiabilityLimit"],
+  "uncapped-liability": ["liabilityCap", "capAppliesToSigner", "capProportionateToFee"],
+  "auto-renewal": ["renewalTermMonths", "noticeWindowDays", "terminableDuringRenewal"],
+  "unilateral-change": ["changeRequiresSignerAgreement", "whatMayChange", "exitOnChange"],
 } as const satisfies Record<ClauseType, readonly string[]>;
 
 /**

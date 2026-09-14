@@ -235,6 +235,65 @@ describe("the paired fixtures", () => {
     expect(high.cost).not.toBe(low.cost);
   });
 
+  it("reads the four newly settled clause types at both ends of their own thresholds", async () => {
+    // `docs/adr/0008` end to end. Two copies of one retainer differing in four lines,
+    // each line a planted clause of a different type, so a category lookup returns the
+    // same answer for both halves and fails on all four at once.
+    const exposed = await flagsFor("retainer-exposed.txt");
+    const bounded = await flagsFor("retainer-bounded.txt");
+
+    const expected: Record<string, number> = {
+      "one-sided-indemnity": 3,
+      "uncapped-liability": 3,
+      "unilateral-change": 3,
+      "auto-renewal": 2,
+    };
+
+    for (const [clauseType, severity] of Object.entries(expected)) {
+      const high = exposed.flags.find((flag) => flag.clauseType === clauseType);
+      const low = bounded.flags.find((flag) => flag.clauseType === clauseType);
+      if (high === undefined || low === undefined) {
+        throw new Error(`the retainer pair lost ${clauseType}`);
+      }
+
+      expect(high.severity, clauseType).toBe(severity);
+      expect(low.severity, clauseType).toBe(1);
+      // Different wording, not just a different number: the two halves say different
+      // things about what the Signer is being asked to carry.
+      expect(high.title, clauseType).not.toBe(low.title);
+      expect(high.cost, clauseType).not.toBe(low.cost);
+    }
+  });
+
+  it("attributes the legal claims on the newly settled clauses instead of asserting them", async () => {
+    // `docs/adr/0007` names three claims that live on these clauses: whether a cap or an
+    // indemnity is limited or overridden by statute, and whether a renewal needs its own
+    // notice to be effective. None may be stated as universal fact. The unilateral change
+    // carries no legal claim at all, so it carries no attribution either.
+    const exposed = loadFixture("retainer-exposed.txt");
+    const named = await flagsFor("retainer-exposed.txt", {
+      source: "document",
+      name: exposed.sidecar.jurisdiction.expected,
+      sourceSentence: exposed.sidecar.jurisdiction.sourceSentence ?? "",
+    });
+    const unknown = await flagsFor("retainer-exposed.txt");
+
+    for (const clauseType of ["one-sided-indemnity", "uncapped-liability", "auto-renewal"]) {
+      const withLaw = named.flags.find((flag) => flag.clauseType === clauseType);
+      const withoutLaw = unknown.flags.find((flag) => flag.clauseType === clauseType);
+
+      expect(withLaw?.cost, clauseType).toContain("Ireland");
+      expect(withoutLaw?.cost, clauseType).not.toContain("Ireland");
+      expect(withoutLaw?.cost, clauseType).toContain("law governing this contract");
+      // Severity is a fact about the wording, so naming the law changes none of it.
+      expect(withLaw?.severity, clauseType).toBe(withoutLaw?.severity);
+    }
+
+    const change = named.flags.find((flag) => flag.clauseType === "unilateral-change");
+    expect(change?.cost).not.toContain("Ireland");
+    expect(change?.cost).not.toContain("law");
+  });
+
   it("separates the halves of the hedging pair by what the contract left out, not by rank", async () => {
     // The third pair isolates provenance rather than scope, so the material difference
     // is the hedge and not the severity: `docs/adr/0006` requires that an unstated
@@ -450,7 +509,7 @@ describe("the seam's refusals", () => {
     expect(withLaw?.severity).toBe(withoutLaw?.severity);
   });
 
-  it("covers all four settled clause types across the corpus", async () => {
+  it("covers every settled clause type across the corpus", async () => {
     const found = new Set<string>();
     for (const name of fixtureNames()) {
       const { flags } = await flagsFor(name);

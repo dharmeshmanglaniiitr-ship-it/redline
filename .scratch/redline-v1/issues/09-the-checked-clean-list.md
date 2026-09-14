@@ -38,12 +38,15 @@ still unreachable, so none of this has been run against a real model.
 - [x] The four clause types with settled thresholds are covered; the remaining four are
       carried as checklist members whose thresholds ticket 10 settles
 
-**The honest limit on four of the eight entries, for ticket 10.** One-sided indemnity,
-uncapped liability, auto-renewal and unilateral change are examined by the checklist pass
-and can be reported clean, which `PRD.md` §5 requires or the clean bill is not a real
-claim. What they cannot get is the second check the settled four get: a flag against the
-entry overturns a clean claim in code, and with no severity rule there is no flag to
-overturn it with. So on those four a clean line means "read, nothing to raise" and a
-clause that *is* found lands in neither list — it is not flagged and not cleared, and the
-screen makes no claim about it. Ticket 10 closes that by giving them thresholds, at which
-point `clearedList` subtracts their flags with no change needed.
+**The honest limit on four of the eight entries — closed by ticket 10.** One-sided
+indemnity, uncapped liability, auto-renewal and unilateral change were examined by the
+checklist pass and could be reported clean, which `PRD.md` §5 requires or the clean bill
+is not a real claim. What they could not get was the second check the settled four get: a
+flag against the entry overturns a clean claim in code, and with no severity rule there
+was no flag to overturn it with. So on those four a clean line meant "read, nothing to
+raise" and a clause that *was* found landed in neither list — not flagged and not
+cleared, with the screen making no claim about it.
+
+Ticket 10 settled their thresholds in `docs/adr/0008`, which closed this with no change
+to `lib/analysis/checklist.ts`: `clearedList` subtracts their flags exactly as it
+subtracts the others. `tests/checked-clean.test.ts` now asserts that on all four.

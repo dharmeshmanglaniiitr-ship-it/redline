@@ -44,8 +44,9 @@ export function severityWord(severity: Severity): string {
  * entry answers about their own contract, so a Signer reading down the cleared list
  * knows what Redline went looking for.
  *
- * Keyed on the checklist rather than on the four clause types with settled thresholds,
- * so an entry added without a name will not compile.
+ * Keyed on the checklist rather than on the clause types with settled thresholds, so an
+ * entry added without a name will not compile even in the window before anything can be
+ * flagged under it.
  */
 const CHECKLIST_NAMES: Record<ChecklistEntry, string> = {
   "payment-approval": "What your work has to meet before you are paid",
@@ -78,6 +79,18 @@ const PROPERTY_IN_PLAIN_WORDS: Record<string, string> = {
   industryScope: "what work the restriction covers",
   compensated: "whether you are paid anything for accepting the restriction",
   killFee: "whether anything is owed to you if they end it early",
+  mutual: "whether the same cover runs back to you",
+  triggeringClaims: "what kind of claim sets the cover off",
+  cappedByLiabilityLimit: "whether the cover sits inside the ceiling on what you can be made to pay",
+  liabilityCap: "what the ceiling is on what you could be made to pay",
+  capAppliesToSigner: "whether that ceiling protects you as well as the client",
+  capProportionateToFee: "how the ceiling compares with what the job pays",
+  renewalTermMonths: "how long each renewal runs",
+  noticeWindowDays: "how much warning you have to give to stop it renewing",
+  terminableDuringRenewal: "whether you can leave part-way through a renewed term",
+  changeRequiresSignerAgreement: "whether a change needs your agreement",
+  whatMayChange: "what they are allowed to change",
+  exitOnChange: "whether you can walk away from a change you did not want",
 };
 
 /**
@@ -117,6 +130,22 @@ export function titleFor(reading: ClauseReading, triggers: readonly string[]): s
       return marked
         ? "They can walk away owing nothing"
         : "They can end it early, for a fee";
+    case "one-sided-indemnity":
+      return marked
+        ? "You are on the hook for other people's claims"
+        : "Each side carries the trouble it causes";
+    case "uncapped-liability":
+      return marked
+        ? "What you could owe is not held to the fee"
+        : "There is a ceiling, and it covers you too";
+    case "auto-renewal":
+      return marked
+        ? "It renews itself unless you stop it in time"
+        : "It rolls on, and you can stop it";
+    case "unilateral-change":
+      return marked
+        ? "They can change the deal after you sign"
+        : "Changes need both names on them";
   }
 }
 
@@ -125,10 +154,13 @@ export function titleFor(reading: ClauseReading, triggers: readonly string[]): s
  * (user story 8).
  *
  * Written from the properties that were read, so two contracts with the same clause type
- * and different wording do not get the same paragraph. The non-compete is the one that
- * carries a legal claim, and that claim is attributed: whether a restriction would hold
- * up is answered by a jurisdiction, and when the contract names none, the answer is that
- * nobody can say, not a guess at US law (`docs/adr/0005`, `docs/adr/0007`).
+ * and different wording do not get the same paragraph. Four clause types carry a legal
+ * claim — the restriction after the job, the indemnity, the liability ceiling and the
+ * renewal — and every one of those claims is attributed rather than asserted: whether it
+ * would hold up is answered by a jurisdiction, and when the contract names none, the
+ * answer is that nobody can say, not a guess at US law (`docs/adr/0005`,
+ * `docs/adr/0007`). The unilateral change carries no such line because nothing here
+ * makes a claim about its legal effect (`docs/adr/0008`).
  */
 export function costFor(
   reading: ClauseReading,
@@ -157,7 +189,7 @@ export function costFor(
             "you arrived with stays yours.";
 
     case "non-compete": {
-      const months = monthsIn(reading.properties.durationMonths);
+      const months = numberIn(reading.properties.durationMonths);
       const parts: string[] = [];
       if (fired.size > 0) {
         parts.push("When this ends, it stops you taking work you could otherwise take.");
@@ -198,6 +230,135 @@ export function costFor(
         : "The client can end this early, but something is payable when they do, so " +
             "walking away is not free to them. Check the amount against what you would " +
             "actually lose.";
+
+    case "one-sided-indemnity": {
+      const parts: string[] = [];
+      if (fired.size > 0) {
+        parts.push(
+          "If someone outside this contract brings a claim, you are the one who pays for it."
+        );
+        if (fired.has("mutual")) {
+          parts.push(
+            "The promise runs one way only, so trouble the client brings on you is still yours to carry."
+          );
+        }
+        if (fired.has("triggeringClaims")) {
+          parts.push("It is not held to trouble you actually caused.");
+        }
+        if (fired.has("cappedByLiabilityLimit")) {
+          parts.push(
+            "It sits outside the ceiling on what you can be made to pay, so the ceiling does not hold it."
+          );
+        }
+      } else {
+        parts.push(
+          "Each side covers the outside claims it brings on the other, and that cover is " +
+            "held inside the same ceiling as everything else here. Read what counts as a " +
+            "claim, because that is what decides when it comes into play."
+        );
+      }
+      parts.push(
+        lawDecides(
+          fired.size > 0
+            ? "Whether a promise this wide holds or is cut back by statute"
+            : "Whether a promise like this holds or is cut back by statute",
+          jurisdiction
+        )
+      );
+      return parts.join(" ");
+    }
+
+    case "uncapped-liability": {
+      const parts: string[] = [];
+      if (fired.size > 0) {
+        parts.push(
+          "What this could cost you is not held to what the job is worth."
+        );
+        if (fired.has("liabilityCap")) {
+          parts.push("No top figure is set at all.");
+        }
+        if (fired.has("capAppliesToSigner")) {
+          parts.push("The limit that is set protects the client, not you.");
+        }
+        if (fired.has("capProportionateToFee")) {
+          parts.push(
+            "The figure named stands far above what this job pays, which makes it a ceiling in name only."
+          );
+        }
+      } else {
+        parts.push(
+          "There is a top figure on what you could be made to pay, it covers you as well " +
+            "as the client, and it is set against what the job is worth. Check the figure " +
+            "against the size of the job before you lean on it."
+        );
+      }
+      parts.push(
+        lawDecides(
+          fired.size > 0
+            ? "Whether exposure like this can be limited or is already limited by statute"
+            : "Whether a ceiling like this holds or is set aside by statute",
+          jurisdiction
+        )
+      );
+      return parts.join(" ");
+    }
+
+    case "auto-renewal": {
+      const parts: string[] = [];
+      if (fired.size > 0) {
+        parts.push(
+          "Unless you give notice in time, this starts again on the terms you agreed once."
+        );
+        const months = numberIn(reading.properties.renewalTermMonths);
+        if (fired.has("renewalTermMonths") && months !== null) {
+          parts.push(`Each renewal signs you up for another ${months} months.`);
+        }
+        const days = numberIn(reading.properties.noticeWindowDays);
+        if (fired.has("noticeWindowDays") && days !== null) {
+          parts.push(
+            `You have to give notice ${days} days before the term ends, so the decision comes round a long way ahead of it.`
+          );
+        }
+        if (fired.has("terminableDuringRenewal")) {
+          parts.push("Once a renewal has started, you cannot leave part-way through it.");
+        }
+      } else {
+        parts.push(
+          "It carries on in short steps unless one of you says otherwise, and you can give " +
+            "notice or leave part-way through a renewed term. That is the ordinary shape " +
+            "for work meant to continue."
+        );
+      }
+      parts.push(
+        lawDecides(
+          "Whether a renewal like this needs its own notice or a fresh agreement to take effect",
+          jurisdiction
+        )
+      );
+      return parts.join(" ");
+    }
+
+    case "unilateral-change": {
+      if (fired.size === 0) {
+        return (
+          "A change to the money or to the work counts only once both of you have signed " +
+          "for it, so the terms you read are the terms you are held to."
+        );
+      }
+      const parts = ["Part of what you agreed can be rewritten after you have signed it."];
+      if (fired.has("changeRequiresSignerAgreement")) {
+        parts.push("A change takes effect whether you agree to it or not.");
+      }
+      if (fired.has("whatMayChange")) {
+        parts.push(
+          "What they can change reaches the money and the work, so the job you priced is not the job you are held to."
+        );
+      }
+      if (fired.has("exitOnChange")) {
+        parts.push("You are given no way out of a change you would never have signed.");
+      }
+      return parts.join(" ");
+    }
   }
 }
 
@@ -210,16 +371,31 @@ export function costFor(
  * compose: a finding can name a missing property and still say whose law decides.
  */
 function enforceabilityLine(jurisdiction: Jurisdiction): string {
-  if (jurisdiction.source === "undetermined") {
-    return (
-      "Whether it would be enforced turns on the law governing this contract, and " +
-      "nothing here names one."
-    );
-  }
-  return `Whether it would be enforced is a question for the law of ${jurisdiction.name}.`;
+  return lawDecides("Whether it would be enforced", jurisdiction);
 }
 
-function monthsIn(value: unknown): number | null {
+/**
+ * One legal question, attributed to the law that answers it.
+ *
+ * `docs/adr/0007` lists the claims that are jurisdiction-dependent, and four of them
+ * belong to clauses this file writes about: whether a liability cap or an indemnity is
+ * limited or overridden by statute, whether an auto-renewal needs its own notice or
+ * consent to be effective, and whether a restriction after the job would be enforced.
+ * Each is put here as a question with an owner rather than as an answer, so the sentence
+ * a Signer reads names whose law decides instead of implying that someone's already has.
+ *
+ * `subject` is the question, written without its full stop — "Whether it would be
+ * enforced". Nothing else in this file states a legal effect, which is the complement
+ * `docs/adr/0007` insists on: what the document says is the same in every jurisdiction.
+ */
+function lawDecides(subject: string, jurisdiction: Jurisdiction): string {
+  if (jurisdiction.source === "undetermined") {
+    return `${subject} turns on the law governing this contract, and nothing here names one.`;
+  }
+  return `${subject} is a question for the law of ${jurisdiction.name}.`;
+}
+
+function numberIn(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string") {
     const digits = /\d+/.exec(value);

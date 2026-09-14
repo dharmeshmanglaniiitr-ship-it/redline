@@ -1,0 +1,84 @@
+{
+  "fixture": "retainer-bounded.txt",
+  "description": "The standard half of the retainer pair, and the case docs/adr/0008 exists to protect: the same four clause types as retainer-exposed.txt, in the shape a fair contract writes them. A month-to-month renewal either side can stop or leave, changes by signed variation only, a mutual indemnity confined to each party's own fault and held inside the limit, and one ceiling tied to the fees that covers both parties. All four are flagged at severity 1 or not at all — marking any of them high is the crying-wolf failure ADR 0003 exists to prevent. Identical to retainer-exposed.txt except at clauses 3.1, 5.1, 9.1 and 9.2.",
+  "sender": "Thornbury Analytics Limited",
+  "engagement": "A continuing monthly content retainer of €2,400 a month covering articles, briefing notes and release copy, beginning 2 March 2026.",
+  "jurisdiction": {
+    "expected": "Ireland",
+    "sourceSentence": "13.1 This Agreement and any dispute arising out of or in connection with it are governed by the laws of Ireland, and the parties submit to the exclusive jurisdiction of the Irish courts."
+  },
+  "planted": [
+    {
+      "id": "renewal-rolling",
+      "clauseType": "auto-renewal",
+      "sourceSentence": "3.1 This Agreement renews for a further term of one (1) month at the end of each term unless either party gives written notice of non-renewal at least fourteen (14) days before the end of the then-current term, and either party may end a renewed term on thirty (30) days' written notice.",
+      "expectedSeverity": 1,
+      "mustBeFlagged": false,
+      "properties": {
+        "renewalTermMonths": 1,
+        "noticeWindowDays": 14,
+        "terminableDuringRenewal": true
+      },
+      "unstatedProperties": [],
+      "expectedHedged": false,
+      "why": "ADR 0008: a renewal in one-month steps, stoppable on a fortnight's notice and leavable part-way through, is the ordinary shape for work meant to continue. mustBeFlagged is false because going unflagged is a correct outcome here; expectedSeverity is the severity if it is flagged."
+    },
+    {
+      "id": "change-by-variation",
+      "clauseType": "unilateral-change",
+      "sourceSentence": "5.1 A change to the monthly fee, to the Services or to any other term of this Agreement takes effect only once both parties have signed a written variation recording it, and either party may decline a variation and let this Agreement run to the end of its current term.",
+      "expectedSeverity": 1,
+      "mustBeFlagged": false,
+      "properties": {
+        "changeRequiresSignerAgreement": true,
+        "whatMayChange": "the monthly fee, the Services or any other term, by signed written variation only",
+        "exitOnChange": true
+      },
+      "unstatedProperties": [],
+      "expectedHedged": false,
+      "why": "ADR 0008: a change that needs the Contractor's signature is a change-order clause, which is what a fair contract has. What the clause lists as changeable reaches the fee and the Services, and that is not a trigger here, because nothing can move without agreement."
+    },
+    {
+      "id": "indemnity-mutual",
+      "clauseType": "one-sided-indemnity",
+      "sourceSentence": "9.1 Each party shall indemnify the other against a claim brought by a third party to the extent that the claim arises from that party's own breach of this Agreement or its own negligence, and each indemnity is subject to the limit of liability in clause 9.2.",
+      "expectedSeverity": 1,
+      "mustBeFlagged": false,
+      "properties": {
+        "mutual": true,
+        "triggeringClaims": "a third-party claim to the extent that it arises from that party's own breach or its own negligence",
+        "cappedByLiabilityLimit": true
+      },
+      "unstatedProperties": [],
+      "expectedHedged": false,
+      "why": "ADR 0008: the promise runs both ways, fires only on the promising party's own fault, and sits inside the liability limit. Nothing to raise."
+    },
+    {
+      "id": "liability-capped",
+      "clauseType": "uncapped-liability",
+      "sourceSentence": "9.2 The total liability of each party under this Agreement is limited to the total fees payable in the twelve (12) months before the claim arose, and that limit applies to the Client and to the Contractor alike.",
+      "expectedSeverity": 1,
+      "mustBeFlagged": false,
+      "properties": {
+        "liabilityCap": "the total fees payable in the twelve months before the claim arose",
+        "capAppliesToSigner": true,
+        "capProportionateToFee": true
+      },
+      "unstatedProperties": [],
+      "expectedHedged": false,
+      "why": "ADR 0008: a ceiling that exists, covers the Contractor as well as the Client, and is tied to the fees rather than to a figure unrelated to the job. Nothing to raise."
+    }
+  ],
+  "expectedCleanChecklist": [
+    "payment-approval",
+    "ip-assignment",
+    "non-compete",
+    "termination-for-convenience"
+  ],
+  "unanswerableQuestions": [
+    "What happens to the retainer if Thornbury Analytics becomes insolvent midway through a term?",
+    "May the Contractor bring in a subeditor to cover a busy month?",
+    "Does the Contractor keep a byline on the published articles?",
+    "Who pays for stock photography used alongside an article?"
+  ]
+}

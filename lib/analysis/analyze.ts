@@ -222,7 +222,7 @@ const FLAGS_SCHEMA = "clause_readings";
  * What the model is asked for when it reads clauses, and what it is deliberately not
  * asked for.
  *
- * It is asked for three things per clause: which of the four settled types it is, the
+ * It is asked for three things per clause: which of the settled types it is, the
  * one sentence it came from copied out character for character, and the values of the
  * properties that type's severity depends on. It is never asked how bad the clause is.
  * Severity is `deriveSeverity`'s answer, computed from those properties in code, so that
@@ -240,7 +240,7 @@ function flagsPrompt(request: AnalysisRequest): string {
     "You are reading a contract for the person being asked to sign it, to find the",
     "clauses that would cost them. Report only what this document actually says.",
     "",
-    "Find every clause of these four kinds. Report each one you find:",
+    "Find every clause of these eight kinds. Report each one you find:",
     "",
     "- payment-approval: when the client's approval or satisfaction is what makes an",
     "  invoice payable, or what makes delivered work count as accepted.",
@@ -250,10 +250,18 @@ function flagsPrompt(request: AnalysisRequest): string {
     "  other work, other clients or other customers.",
     "- termination-for-convenience: when the client can end the agreement early",
     "  without the signer being at fault.",
+    "- one-sided-indemnity: when the signer promises to cover claims, losses or costs",
+    "  brought against the client by someone outside this contract.",
+    "- uncapped-liability: when the agreement says how much either party can be made",
+    "  to pay, or says that a party's liability is not limited.",
+    "- auto-renewal: when the agreement continues into a further term without anyone",
+    "  signing again.",
+    "- unilateral-change: when the client can alter the fee, the work or the terms,",
+    "  and also when a change is said to require both parties' agreement.",
     "",
     "For each one, return:",
     "",
-    "1. clauseType: one of the four names above.",
+    "1. clauseType: one of the eight names above.",
     "2. sourceSentence: the single sentence the clause is in, copied from the contract",
     "   character for character — same words, same numbers, same punctuation, same",
     "   spacing, including any clause number at the start of it. Do not shorten it, do",
@@ -278,6 +286,23 @@ function flagsPrompt(request: AnalysisRequest): string {
     "  contract says something is paid for accepting the restriction.",
     "- termination-for-convenience — killFee: what the contract says is payable for the",
     "  unfinished part, or \"absent\" where it says nothing is payable.",
+    "- one-sided-indemnity — mutual: true only if the client promises the signer the",
+    "  same cover the signer promises the client. triggeringClaims: the contract's own",
+    "  words for what sets the promise off. cappedByLiabilityLimit: true only if the",
+    "  contract says the promise is subject to its limit of liability.",
+    "- uncapped-liability — liabilityCap: the contract's own words for the ceiling on",
+    "  what the signer could be made to pay, or \"none\" where it says there is no limit.",
+    "  capAppliesToSigner: true only if that ceiling limits the signer's own liability",
+    "  and not only the client's. capProportionateToFee: true only if the ceiling is",
+    "  tied to the fees under this agreement or to a figure of that order.",
+    "- auto-renewal — renewalTermMonths: how many months each further term runs, as a",
+    "  number. noticeWindowDays: how many days before the end of a term the signer has",
+    "  to give notice to stop it renewing, as a number. terminableDuringRenewal: true",
+    "  only if the signer can end a renewed term before it expires.",
+    "- unilateral-change — changeRequiresSignerAgreement: true only if a change takes",
+    "  effect once the signer has agreed to it in writing. whatMayChange: the",
+    "  contract's own words for what may be changed. exitOnChange: true only if the",
+    "  signer may end the agreement, without penalty, because of a change.",
     "",
     "Rules:",
     "- Leave a property out entirely when the contract does not settle it. That gap is",
@@ -333,7 +358,7 @@ function flagsResponse(
         findings: {
           type: "array",
           description:
-            "Every clause of one of the four types found in this document. Empty when " +
+            "Every clause of one of the eight types found in this document. Empty when " +
             "the document contains none of them.",
           items: {
             type: "object",
@@ -361,6 +386,18 @@ function flagsResponse(
                   industryScope: { type: "string" },
                   compensated: { type: "boolean" },
                   killFee: { type: "string" },
+                  mutual: { type: "boolean" },
+                  triggeringClaims: { type: "string" },
+                  cappedByLiabilityLimit: { type: "boolean" },
+                  liabilityCap: { type: "string" },
+                  capAppliesToSigner: { type: "boolean" },
+                  capProportionateToFee: { type: "boolean" },
+                  renewalTermMonths: { type: "number" },
+                  noticeWindowDays: { type: "number" },
+                  terminableDuringRenewal: { type: "boolean" },
+                  changeRequiresSignerAgreement: { type: "boolean" },
+                  whatMayChange: { type: "string" },
+                  exitOnChange: { type: "boolean" },
                 },
               },
             },
@@ -507,6 +544,53 @@ function flagFrom(
         hedgeNote: hedgeNoteFor(unstatedProperties),
       };
     }
+    case "one-sided-indemnity": {
+      const unstatedProperties = unstatedPropertiesOf(
+        "one-sided-indemnity",
+        reading.properties
+      );
+      return {
+        ...common,
+        clauseType: "one-sided-indemnity",
+        properties: reading.properties,
+        unstatedProperties,
+        hedged: unstatedProperties.length > 0,
+        hedgeNote: hedgeNoteFor(unstatedProperties),
+      };
+    }
+    case "uncapped-liability": {
+      const unstatedProperties = unstatedPropertiesOf("uncapped-liability", reading.properties);
+      return {
+        ...common,
+        clauseType: "uncapped-liability",
+        properties: reading.properties,
+        unstatedProperties,
+        hedged: unstatedProperties.length > 0,
+        hedgeNote: hedgeNoteFor(unstatedProperties),
+      };
+    }
+    case "auto-renewal": {
+      const unstatedProperties = unstatedPropertiesOf("auto-renewal", reading.properties);
+      return {
+        ...common,
+        clauseType: "auto-renewal",
+        properties: reading.properties,
+        unstatedProperties,
+        hedged: unstatedProperties.length > 0,
+        hedgeNote: hedgeNoteFor(unstatedProperties),
+      };
+    }
+    case "unilateral-change": {
+      const unstatedProperties = unstatedPropertiesOf("unilateral-change", reading.properties);
+      return {
+        ...common,
+        clauseType: "unilateral-change",
+        properties: reading.properties,
+        unstatedProperties,
+        hedged: unstatedProperties.length > 0,
+        hedgeNote: hedgeNoteFor(unstatedProperties),
+      };
+    }
   }
 }
 
@@ -530,6 +614,14 @@ function readingOf(
     case "non-compete":
       return { clauseType, properties: stated(SEVERITY_PROPERTIES[clauseType], properties) };
     case "termination-for-convenience":
+      return { clauseType, properties: stated(SEVERITY_PROPERTIES[clauseType], properties) };
+    case "one-sided-indemnity":
+      return { clauseType, properties: stated(SEVERITY_PROPERTIES[clauseType], properties) };
+    case "uncapped-liability":
+      return { clauseType, properties: stated(SEVERITY_PROPERTIES[clauseType], properties) };
+    case "auto-renewal":
+      return { clauseType, properties: stated(SEVERITY_PROPERTIES[clauseType], properties) };
+    case "unilateral-change":
       return { clauseType, properties: stated(SEVERITY_PROPERTIES[clauseType], properties) };
   }
 }
@@ -576,12 +668,13 @@ const CHECKLIST_SCHEMA = "checklist_examination";
 /**
  * What the model is asked when it works down the checklist.
  *
- * This is a separate reading from the flags, and it is deliberately a wider one. The
- * flags pass looks for four kinds of clause it can grade; this pass covers all eight
- * entries `docs/adr/0004` requires a clean bill to be made of, including the four whose
- * dangerous-vs-standard thresholds `PRD.md` §5 leaves open. Those four can be read — is
- * there an indemnity running one way only, is there a ceiling on what the Signer could
- * be made to pay — long before there is a rule for how bad a bad one is.
+ * This is a separate reading from the flags, and it stays separate now that both cover
+ * the same eight entries. They answer different questions. The flags pass asks what a
+ * clause says, clause by clause, and returns nothing for a subject the contract never
+ * raises — silence has no sentence to quote (`docs/adr/0001`). This pass asks whether
+ * each entry was read and came back with nothing to take up, which is exactly the claim
+ * a contract's silence supports and a flag cannot make. Keeping them apart is what lets
+ * a Signer tell "we looked and there is nothing here" from "we never looked".
  *
  * Every entry has to come back with a verdict, and the instruction says so, because the
  * whole value of this list is that a Signer can tell "we looked and found nothing" from
