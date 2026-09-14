@@ -7,7 +7,14 @@ import { readPastedText } from "@/lib/document/extract";
 import type { ExtractionResult, UnreadableReason } from "@/lib/document/extraction";
 import type { ExtractedDocument } from "@/lib/supabase/documents";
 
-import { GalleyFoot, LABEL, Masthead, ProofMark, STAMP } from "../_components/galley";
+import {
+  GalleyFoot,
+  LABEL,
+  Masthead,
+  ProofMark,
+  STAMP,
+  WHERE_REDLINE_STOPS,
+} from "../_components/galley";
 import { explainDocument, readRedLines } from "./actions";
 import { NOT_ASKED, type AnalysisState } from "./analysis-state";
 import { ClearedList } from "./cleared-list";
@@ -368,14 +375,20 @@ export default function ReviewPage() {
               {/* The query mark, because this is the thing left unresolved. A summary
                   with nothing after it would read as a contract with nothing wrong in
                   it, which is the worst thing this product could say
-                  (`docs/spec-v1.md`), so what has not been done is said here. */}
+                  (`docs/spec-v1.md`), so what has not been done is said here.
+
+                  Where Redline stops is said in the same breath, and here rather than
+                  only at the foot of the page. This is the point a Signer starts reading
+                  findings and drafted replies, so it is the point at which knowing what
+                  the product is not still changes how they read them. */}
               <div className="mt-9 flex max-w-[58ch] items-start gap-3 border-t border-rule pt-5">
                 <ProofMark kind="query" className="mt-0.5 h-5 w-5 text-mark" />
                 <p className="text-[0.94rem] leading-[1.55] text-ink-soft">
                   What is above says what the contract contains. Next is the law Redline
                   read it under, then the checklist it went through, then the terms that
                   would cost you, marked in the wording itself with a line to send back on
-                  each one. Under that is a box for anything the marks did not cover.
+                  each one. Under that is a box for anything the marks did not cover.{" "}
+                  <span className="text-ink">{WHERE_REDLINE_STOPS}</span>
                 </p>
               </div>
             </>

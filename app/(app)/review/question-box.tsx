@@ -33,6 +33,21 @@ import { answerAboutDocument } from "./actions";
 import type { Exchange, QuestionState } from "./question-state";
 
 /**
+ * What the box will and will not answer, said before a Signer types into it.
+ *
+ * Exported so the tests read the same sentence the screen does. The first two sentences
+ * were already here; the third is the one this box needed most. A question box invites
+ * any question, and the two a Signer most wants answered — should I sign this, would this
+ * hold up — are the two Redline cannot source in their document. Saying so up front is
+ * cheaper for them than asking and being held back (`lib/analysis/answer.ts`).
+ */
+export const WHAT_THE_BOX_ANSWERS =
+  "Ask anything else about it. Redline answers from this contract alone and shows you " +
+  "the sentence it read the answer out of. Where the wording settles nothing, it says so " +
+  "rather than telling you what other contracts do. It will not tell you whether to sign, " +
+  "or how a court would read a clause.";
+
+/**
  * It takes `ExtractedDocument`, the one arm of `ExtractionResult` that carries text, for
  * the same reason `KeepInLibrary` does: a document that could not be read has no `text`
  * field to hand over, so it cannot be asked about and the compiler says so. Only the three
@@ -76,9 +91,7 @@ export function QuestionBox({ document }: { document: ExtractedDocument }) {
       </div>
 
       <p className="mt-5 max-w-[58ch] text-[0.94rem] leading-[1.55] text-ink-soft">
-        Ask anything else about it. Redline answers from this contract alone and shows you
-        the sentence it read the answer out of. Where the wording settles nothing, it says
-        so rather than telling you what other contracts do.
+        {WHAT_THE_BOX_ANSWERS}
       </p>
 
       <form

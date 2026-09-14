@@ -116,6 +116,20 @@ export const LABEL =
   "text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-ink-soft";
 
 /**
+ * Where Redline stops, in one sentence, kept in one place so every screen says it the
+ * same way.
+ *
+ * `PRODUCT.md` draws the line and the whole product sits inside it: an explanation of a
+ * document and wording to send, with the decision left where it belongs. It is said at
+ * the foot of every working view, and again on the review sheet next to the report
+ * itself, because a limit a Signer only meets after scrolling past the answer is a limit
+ * they read too late.
+ */
+export const WHERE_REDLINE_STOPS =
+  "Redline explains a document and drafts wording you can send. It does not tell you " +
+  "whether to sign, and it is not a law firm.";
+
+/**
  * The legend row that opens the sheet: what the document is on the left, what state it
  * is in on the right. It is the first thing on the page, with no chrome above it.
  *

@@ -406,6 +406,11 @@ function MarginMark({
  *
  * The message is rendered whole rather than in pieces, with the blank lines it was
  * written with, because the whole of it is what gets pasted into a reply.
+ *
+ * One line says what the block is before the block is read. Of everything on this screen
+ * the drafted reply is the piece that most resembles something a lawyer hands over, and a
+ * Signer about to send it under their own name is owed the difference in the margin where
+ * they are looking rather than in the footer under the sheet.
  */
 function DraftedReply({ offer }: { offer: CounterOffer }) {
   const parts = useMemo(
@@ -416,7 +421,10 @@ function DraftedReply({ offer }: { offer: CounterOffer }) {
   return (
     <div className="mt-3 max-w-[40ch] border-t border-rule pt-3">
       <h4 className={LABEL}>What to send back</h4>
-      <p className="mt-2 whitespace-pre-line text-[0.9rem] leading-[1.55] text-ink-soft">
+      <p className="mt-2 text-[0.82rem] leading-[1.5] text-ink-soft">
+        {DRAFTED_NOT_ADVISED}
+      </p>
+      <p className="mt-3 whitespace-pre-line text-[0.9rem] leading-[1.55] text-ink-soft">
         {parts.map((part, index) =>
           part.quoted ? (
             <span key={index} className="font-document text-ink">
@@ -430,6 +438,17 @@ function DraftedReply({ offer }: { offer: CounterOffer }) {
     </div>
   );
 }
+
+/**
+ * What the drafted reply is, said above it.
+ *
+ * Exported so the tests read the same sentence the margin does. It says the two things a
+ * Signer needs before pasting this into an email: it is wording to ask with, and asking is
+ * a different act from having been told whether to sign.
+ */
+export const DRAFTED_NOT_ADVISED =
+  "Wording to ask with, if you want to ask. Redline drafts it from what the clause says. " +
+  "Whether to sign is yours.";
 
 /** One run of the drafted message, and whether it is clause text or the note around it. */
 interface Voiced {

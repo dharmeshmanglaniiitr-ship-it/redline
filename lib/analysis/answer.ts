@@ -22,6 +22,11 @@
  * `lib/analysis/checklist.ts` uses for a clean bill. A caller that wants the quote has to
  * narrow on `answered` first, and narrowing is what tells them an answer was given.
  *
+ * **An answer that left the document is refused too.** A verified quote proves the
+ * sentence is there. It proves nothing about the paragraph beside it, and the question
+ * box is the one place in this product where a Signer can ask outright whether to sign or
+ * whether a clause would hold up. Both are answered here by holding the reply back.
+ *
  * **An answer's quote is checked, not trusted.** The sentence is matched against the
  * document by `lib/analysis/citation.ts`, the same verifier every flag's citation goes
  * through (`docs/adr/0001`). A quote that is a paraphrase, a fragment or two sentences
@@ -89,6 +94,87 @@ export type DocumentAnswer =
 export const DOCUMENT_DOES_NOT_SAY =
   "This contract does not answer that. Redline read the wording for it and found nothing " +
   "that settles the point, and it will not fill the gap with what other contracts say.";
+
+/**
+ * What a Signer is told when the reply that came back answered from somewhere else.
+ *
+ * A different thing from silence, so it is a different sentence. Telling a Signer their
+ * contract does not answer a question it does answer would be its own false claim about
+ * the document, so this says what actually happened and claims nothing about the wording
+ * either way.
+ */
+export const ANSWER_CAME_FROM_OUTSIDE =
+  "Redline held that reply back. The answer reached outside your contract: to what the " +
+  "law does, to what other contracts say, or to what you should do about the deal. None " +
+  "of that is something Redline can point to in your own copy. Ask about the wording " +
+  "itself and it will answer.";
+
+/**
+ * The two ways an answer stops being an account of this document.
+ *
+ * Both are already in the prompt, and the prompt is not enough — nothing in a prompt is,
+ * which is why the citation is verified downstream rather than asked for. This is the
+ * same move applied to the prose. A Signer can ask the question box anything at all,
+ * including the two questions this product does not answer: whether to sign, and whether
+ * a term would hold up. Those are the questions a model is most willing to answer and
+ * least able to source, and an answer to either arrives carrying a verified citation that
+ * has nothing to do with the claim being made. The citation check cannot see that. This
+ * can.
+ *
+ * The summary is left to its prompt alone, deliberately. It is a bounded task over the
+ * document with nobody asking it anything, where the question box is unbounded by
+ * construction.
+ *
+ * **Advice to the Signer.** Whether to sign, whether to accept, what to do next. Written
+ * as the verb plus its object rather than as a word list, so "you should give thirty
+ * days' notice" — a restatement of what the contract requires — is not caught by the same
+ * pattern that catches "you should not sign this".
+ *
+ * **A claim from outside the document.** What the law does, what a court would do,
+ * whether a clause is enforceable, what other contracts say. `docs/adr/0007` makes every
+ * one of these a question for a governing jurisdiction, answered on a flag by naming
+ * whose law decides (`lib/analysis/wording.ts`) and answered here not at all.
+ */
+const ANSWERED_FROM_SOMEWHERE_ELSE: readonly RegExp[] = [
+  // Advice about signing or about the deal.
+  /\b(?:do not|don't|should not|shouldn't|would not|wouldn't|never|refuse to|decline to|hesitate to)\s+sign\b/i,
+  /\byou\s+(?:should|ought to|need to|may want to|might want to|would be wise to)\s+(?:sign|accept|reject|refuse|renegotiate|negotiate|push back|walk away|object|insist)\b/i,
+  /\b(?:i|we)\s+(?:recommend|advise|suggest|would recommend|would advise|would suggest)\b/i,
+  /\bmy advice\b/i,
+  /\b(?:safe|risky|unwise|advisable|inadvisable|dangerous|fine)\s+to\s+sign\b/i,
+  /\b(?:seek|get|take)\s+(?:legal\s+)?advice\b/i,
+  /\bconsult\s+(?:a|an|your)\s+(?:lawyer|solicitor|attorney)\b/i,
+  /\b(?:exploitative|predatory)\b/i,
+  /\bunfair\s+(?:to you|term|clause|deal|contract)\b/i,
+  // A claim the document cannot be shown to support.
+  /\b(?:unenforceable|enforceable|voidable|unlawful|illegal|statutory|statute)\b/i,
+  /\b(?:a|the)\s+court\s+(?:would|will|might|could|may|is likely|tends)\b/i,
+  /\bthe law\s+(?:requires|says|provides|gives|allows you|will|would)\b/i,
+  /\bunder\s+the\s+law\b/i,
+  /\blegally\s+(?:binding|required|obliged|entitled|speaking)\b/i,
+  /\b(?:most|many|other|typical|standard)\s+(?:contracts|agreements)\b/i,
+  /\bin\s+most\s+cases\b/i,
+  /\b(?:typically|usually|normally|ordinarily|customarily)\b/i,
+  /\b(?:generally speaking|in general|as a rule|standard practice|common practice)\b/i,
+];
+
+/**
+ * Whether the prose around the quote answered from outside this document.
+ *
+ * The document's own words are exempt, and that is not a loophole — it is the difference
+ * between a contract containing the word "unenforceable" in its severability clause and
+ * Redline telling somebody their clause is unenforceable. The verified sentence is cut
+ * out first, the way `tests/counter-offers.test.ts` cuts it out of a drafted message, and
+ * what is checked is what Redline put around it.
+ *
+ * A paraphrase of the document is not cut out and could still be caught. That is the
+ * direction to be wrong in: the Signer is told the reply was held back, which is true,
+ * rather than being told the contract is silent when it is not.
+ */
+function answeredFromSomewhereElse(text: string, sourceSentence: string): boolean {
+  const written = text.split(sourceSentence).join(" ");
+  return ANSWERED_FROM_SOMEWHERE_ELSE.some((tell) => tell.test(written));
+}
 
 /**
  * Answer a question about a document, or say that the document does not answer it.
@@ -171,13 +257,19 @@ const ANSWER_SCHEMA = "document_answer";
  * The answer the gateway is asked to produce, and the narrowing that makes it an answer
  * rather than a claim to be one.
  *
- * Four different responses come back as a refusal rather than as an answer, and they are
- * one rule read four ways: an answer Redline cannot point at is not an answer. The model
+ * Five different responses come back as a refusal rather than as an answer, and they are
+ * one rule read five ways: an answer Redline cannot point at is not an answer. The model
  * said the document does not settle it. The model said it does but quoted nothing. The
  * model quoted something that is not a sentence of this document. The model quoted a real
- * sentence and then had nothing to say about it. In every one of those the Signer would be
- * holding a claim they could not check, so in every one of those they are told the
- * document does not say.
+ * sentence and then had nothing to say about it. Or it quoted a real sentence and then
+ * said something about the law, about other contracts, or about what the Signer ought to
+ * do — a claim the quote does not carry, however well the quote checks out. In every one
+ * of those the Signer would be holding a claim they could not check.
+ *
+ * The first four are silence and are told as silence. The fifth is not silence, so it is
+ * told differently: `ANSWER_CAME_FROM_OUTSIDE` rather than `DOCUMENT_DOES_NOT_SAY`,
+ * because saying the contract does not answer a question it does answer would be the
+ * same kind of false claim the check exists to stop.
  *
  * The one thing that throws is a response with no verdict in it at all, because that is
  * not a refusal — it is a response that was never an answer, and reporting it as "the
@@ -247,6 +339,13 @@ function answerResponse(documentText: string, question: string): ResponseSchema<
 
       const text = typeof answer.text === "string" ? answer.text.trim() : "";
       if (text === "") return refused;
+
+      // The positioning check, at the seam rather than in the prompt. A verified quote
+      // says the sentence exists; it says nothing about whether the paragraph beside it
+      // is an account of that sentence or an opinion about the law.
+      if (answeredFromSomewhereElse(text, sourceSentence)) {
+        return { answered: false, question, text: ANSWER_CAME_FROM_OUTSIDE };
+      }
 
       return { answered: true, question, sourceSentence, text };
     },

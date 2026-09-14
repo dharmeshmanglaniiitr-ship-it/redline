@@ -18,6 +18,26 @@ the kind of proof `PRODUCT.md` says does not exist.
 
 **Status:** ready-for-agent
 
+**Three positioning defects ticket 16 found in `app/page.tsx` and deliberately did not
+fix, because this is the ticket that touches that page.** All three are the subtler
+failure mode: Redline stating something the document does not support. Replacing the
+illustrated proof with real analysis output should dissolve all three, since the real
+analysis does not make any of these mistakes — but check each one rather than assuming.
+
+1. The sample payment finding says "nothing in the contract says what good enough means",
+   yet the sample clause *does* state its standard ("satisfactory to the Client in its
+   sole and absolute discretion"). The product writes two different sentences for
+   stated-subjective and unstated; the page uses the unstated one over a clause that
+   states it.
+2. The sample non-compete is titled "Two years, worldwide, unpaid" and says "you are paid
+   nothing for agreeing to that", but the sample clause is *silent* on compensation. The
+   product would say "It says nothing about paying you for it." Asserting silence as a
+   negative fact is what `tests/counter-offers.test.ts` already forbids in the product.
+3. The CLEARED list names five entries (Invoice due date, Expenses, Confidentiality,
+   Revisions, Governing law) that are not among the product's eight checklist entries,
+   under the line "Redline names every clause it examined". It describes a checklist
+   Redline does not have.
+
 - [ ] The flag shown on the landing page was produced by the real analysis
 - [ ] Its source sentence appears verbatim in the document it came from, held to the same
       exact-match standard as the product itself

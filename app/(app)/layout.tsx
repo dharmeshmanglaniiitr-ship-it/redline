@@ -1,7 +1,7 @@
 import { readSignerState } from "@/lib/supabase/signer";
 
 import { AccountLine } from "./_components/account-line";
-import { TrimMarks } from "./_components/galley";
+import { TrimMarks, WHERE_REDLINE_STOPS } from "./_components/galley";
 import { SignerProvider } from "./_components/signer-context";
 
 /**
@@ -36,8 +36,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <footer className="mx-auto flex w-full max-w-[84rem] flex-wrap items-baseline justify-between gap-x-10 gap-y-3 px-5 py-10 sm:px-8">
           <span className="font-document text-[1.05rem] italic text-field-ink">Redline</span>
           <span className="max-w-[58ch] text-[0.83rem] leading-relaxed text-field-soft">
-            Redline explains a document and drafts language you can send. It does not tell
-            you whether to sign, and it is not a law firm.
+            {WHERE_REDLINE_STOPS}
           </span>
         </footer>
       </div>
