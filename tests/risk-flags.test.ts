@@ -317,6 +317,16 @@ describe("the paired fixtures", () => {
     expect(hedged.unstatedProperties).toEqual(["compensated"]);
     expect(hedged.hedgeNote).not.toBeNull();
     expect(hedged.hedgeNote).toContain("paid");
+
+    // And the cost differs on the one thing the pair changed. `compensated` fires on both
+    // halves, because an unstated property is read at its dangerous end (`docs/adr/0006`),
+    // but the two are different facts: one contract says the restriction is unpaid and the
+    // other says nothing about payment at all. Writing "you are paid nothing" over the
+    // silent half would be the product stating what the document does not
+    // (`CLAUDE.md`), and the hedge underneath is not there to take that back.
+    expect(hedged.cost).not.toBe(plain.cost);
+    expect(plain.cost).toMatch(/paid nothing/i);
+    expect(hedged.cost).not.toMatch(/paid nothing|pays you nothing/i);
   });
 
   it("differs materially on every pair, and on nothing the pair did not change", async () => {

@@ -18,14 +18,23 @@ the database and the UI, and is testable without either.
 
 **Blocked by:** 06, 07
 
-**Status:** ready-for-agent
+**Status:** done — 2026-09-14. `lib/analysis/answer.ts` is the second seam. The answer is a
+discriminated union whose refused arm has no `sourceSentence` field at all, so a refusal
+that cites a sentence does not compile — asserted by a `@ts-expect-error` that
+`npx tsc --noEmit` runs. All 34 unanswerable questions across all 10 sidecars refuse, and
+the refusal is checked for general legal content rather than only for being a refusal.
 
-- [ ] A Signer can ask a free-text question about an uploaded document and get an answer
-- [ ] Answers quote the document they are drawn from
-- [ ] The fixture set of unanswerable questions produces explicit refusals, not general
+A quote the citation verifier cannot match verbatim collapses to a refusal rather than
+being shown, which is ADR 0001's rule applied to answers: the model is not trusted to have
+quoted correctly here either. Live refusal behaviour under a real model is untested
+(HTTP 429).
+
+- [x] A Signer can ask a free-text question about an uploaded document and get an answer
+- [x] Answers quote the document they are drawn from
+- [x] The fixture set of unanswerable questions produces explicit refusals, not general
       legal answers
-- [ ] A refusal is distinguishable in the returned structure, so a test can assert one
+- [x] A refusal is distinguishable in the returned structure, so a test can assert one
       occurred without matching on wording
-- [ ] The seam is callable as a function of document text and question, with no browser
+- [x] The seam is callable as a function of document text and question, with no browser
       and no UI
-- [ ] Answers explain what the document says; they do not advise whether to sign
+- [x] Answers explain what the document says; they do not advise whether to sign

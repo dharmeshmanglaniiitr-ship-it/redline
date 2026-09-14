@@ -161,6 +161,16 @@ export function titleFor(reading: ClauseReading, triggers: readonly string[]): s
  * answer is that nobody can say, not a guess at US law (`docs/adr/0005`,
  * `docs/adr/0007`). The unilateral change carries no such line because nothing here
  * makes a claim about its legal effect (`docs/adr/0008`).
+ *
+ * **A property fires on two different facts, and they get two different sentences.** A
+ * property is a trigger both when the contract states it at its dangerous end and when the
+ * contract never states it at all (`docs/adr/0006`), and those are not the same finding. A
+ * restriction that names no payment is not a restriction that pays nothing; a ceiling the
+ * contract is silent about has no figure to call disproportionate. Each arm below reads
+ * `reading.properties` to see which of the two it has, the way
+ * `lib/analysis/counter-offer.ts` does on the redraft, because `CLAUDE.md` lets the
+ * product state only what the document says. The hedge names the gap afterwards; it is not
+ * there to take back a sentence this function should not have written.
  */
 export function costFor(
   reading: ClauseReading,
@@ -171,41 +181,74 @@ export function costFor(
 
   switch (reading.clauseType) {
     case "payment-approval":
-      return fired.has("acceptanceStandard")
+      if (!fired.has("acceptanceStandard")) {
+        return (
+          "Your work is measured against a stated test, so acceptance is not a matter " +
+          "of taste. Read the test itself. It is what you will be judged on, and now " +
+          "is the cheap time to argue with it."
+        );
+      }
+      return reading.properties.acceptanceStandard === undefined
         ? "The client decides whether your finished work is good enough, and the " +
-            "contract sets no test they have to apply. They can hold back money for " +
-            "work you have already handed over, and you have nothing to point at."
-        : "Your work is measured against a stated test, so acceptance is not a matter " +
-            "of taste. Read the test itself. It is what you will be judged on, and now " +
-            "is the cheap time to argue with it.";
+            "contract does not say what test they have to apply. They can hold back " +
+            "money for work you have already handed over, and you have nothing to " +
+            "point at."
+        : "The client decides whether your finished work is good enough, and the " +
+            "contract makes that a matter of their own satisfaction. They can hold back " +
+            "money for work you have already handed over, and there is no test you could " +
+            "point at and say you met.";
 
     case "ip-assignment":
-      return fired.has("reachesBeyondDeliverable")
+      if (!fired.has("reachesBeyondDeliverable")) {
+        return (
+          "The rights in this work pass to the client, which is what nearly every " +
+          "freelance contract says. It stops at what you made for this job, so what " +
+          "you arrived with stays yours."
+        );
+      }
+      return reading.properties.reachesBeyondDeliverable === undefined
         ? "Handing the client the rights in what you made for them is ordinary. This " +
+            "clause does not say where the assignment stops. Nothing in it holds the " +
+            "handover to this job, so the tools and methods you reuse everywhere are " +
+            "inside its reach as it reads."
+        : "Handing the client the rights in what you made for them is ordinary. This " +
             "goes further and takes things you brought with you, so tools and methods " +
-            "you reuse on every job stop being yours to reuse."
-        : "The rights in this work pass to the client, which is what nearly every " +
-            "freelance contract says. It stops at what you made for this job, so what " +
-            "you arrived with stays yours.";
+            "you reuse on every job stop being yours to reuse.";
 
     case "non-compete": {
-      const months = numberIn(reading.properties.durationMonths);
+      const stated = reading.properties;
+      const months = numberIn(stated.durationMonths);
       const parts: string[] = [];
       if (fired.size > 0) {
         parts.push("When this ends, it stops you taking work you could otherwise take.");
-        if (fired.has("durationMonths") && months !== null) {
-          parts.push(`The block runs ${months} months past the last day of the job.`);
+        if (fired.has("durationMonths")) {
+          parts.push(
+            months === null
+              ? "The contract does not say how long the block lasts, and nothing in it " +
+                  "brings it to an end."
+              : `The block runs ${months} months past the last day of the job.`
+          );
         }
         if (fired.has("industryScope")) {
           parts.push(
-            "It is drawn wide enough to catch clients who have nothing to do with this one."
+            stated.industryScope === undefined
+              ? "It does not say what work it covers."
+              : "It is drawn wide enough to catch clients who have nothing to do with this one."
           );
         }
         if (fired.has("geographicScope")) {
-          parts.push("It is not tied to the place you actually worked.");
+          parts.push(
+            stated.geographicScope === undefined
+              ? "It does not say where it applies."
+              : "It is not tied to the place you actually worked."
+          );
         }
         if (fired.has("compensated")) {
-          parts.push("You are paid nothing for agreeing to it.");
+          parts.push(
+            stated.compensated === undefined
+              ? "It says nothing about paying you for it."
+              : "You are paid nothing for agreeing to it."
+          );
         }
       } else {
         parts.push(
@@ -223,15 +266,24 @@ export function costFor(
     }
 
     case "termination-for-convenience":
-      return fired.has("killFee")
-        ? "The client can end this whenever they like and owes nothing for the part " +
+      if (!fired.has("killFee")) {
+        return (
+          "The client can end this early, but something is payable when they do, so " +
+          "walking away is not free to them. Check the amount against what you would " +
+          "actually lose."
+        );
+      }
+      return reading.properties.killFee === undefined
+        ? "The client can end this whenever they like, and the contract does not say " +
+            "that anything is payable for the part you have not reached yet. The hole " +
+            "it leaves in your schedule is yours to fill, and the fee you planned " +
+            "around may never arrive."
+        : "The client can end this whenever they like and owes nothing for the part " +
             "you have not reached yet. The hole it leaves in your schedule is yours to " +
-            "fill, and the fee you planned around may never arrive."
-        : "The client can end this early, but something is payable when they do, so " +
-            "walking away is not free to them. Check the amount against what you would " +
-            "actually lose.";
+            "fill, and the fee you planned around may never arrive.";
 
     case "one-sided-indemnity": {
+      const stated = reading.properties;
       const parts: string[] = [];
       if (fired.size > 0) {
         parts.push(
@@ -239,15 +291,23 @@ export function costFor(
         );
         if (fired.has("mutual")) {
           parts.push(
-            "The promise runs one way only, so trouble the client brings on you is still yours to carry."
+            stated.mutual === undefined
+              ? "It does not say that the same cover runs back to you, so nothing here covers trouble the client brings on you."
+              : "The promise runs one way only, so trouble the client brings on you is still yours to carry."
           );
         }
         if (fired.has("triggeringClaims")) {
-          parts.push("It is not held to trouble you actually caused.");
+          parts.push(
+            stated.triggeringClaims === undefined
+              ? "It does not say what kind of claim sets it off, so nothing in it holds the promise to trouble you caused."
+              : "It is not held to trouble you actually caused."
+          );
         }
         if (fired.has("cappedByLiabilityLimit")) {
           parts.push(
-            "It sits outside the ceiling on what you can be made to pay, so the ceiling does not hold it."
+            stated.cappedByLiabilityLimit === undefined
+              ? "And it does not say whether it sits inside the ceiling on what you can be made to pay."
+              : "It sits outside the ceiling on what you can be made to pay, so the ceiling does not hold it."
           );
         }
       } else {
@@ -269,20 +329,36 @@ export function costFor(
     }
 
     case "uncapped-liability": {
+      const stated = reading.properties;
+      const noCeiling = fired.has("liabilityCap");
       const parts: string[] = [];
       if (fired.size > 0) {
         parts.push(
           "What this could cost you is not held to what the job is worth."
         );
-        if (fired.has("liabilityCap")) {
-          parts.push("No top figure is set at all.");
+        if (noCeiling) {
+          parts.push(
+            stated.liabilityCap === undefined
+              ? "The clause names no top figure for what you could be asked to pay."
+              : "It says outright that there is no top figure."
+          );
         }
         if (fired.has("capAppliesToSigner")) {
-          parts.push("The limit that is set protects the client, not you.");
-        }
-        if (fired.has("capProportionateToFee")) {
           parts.push(
-            "The figure named stands far above what this job pays, which makes it a ceiling in name only."
+            stated.capAppliesToSigner === undefined
+              ? "It does not say that a limit here covers you as well as the client."
+              : "The limit that is set protects the client, not you."
+          );
+        }
+        // Only worth saying where a figure exists to compare against. With no ceiling at
+        // all there is nothing to call disproportionate, and the line above has already
+        // said the thing that matters (`lib/analysis/counter-offer.ts` reads it the same
+        // way).
+        if (fired.has("capProportionateToFee") && !noCeiling) {
+          parts.push(
+            stated.capProportionateToFee === undefined
+              ? "And nothing ties that figure to what this job pays."
+              : "And the figure named stands far above what this job pays, which makes it a ceiling in name only."
           );
         }
       } else {
@@ -304,23 +380,34 @@ export function costFor(
     }
 
     case "auto-renewal": {
+      const stated = reading.properties;
       const parts: string[] = [];
       if (fired.size > 0) {
         parts.push(
           "Unless you give notice in time, this starts again on the terms you agreed once."
         );
-        const months = numberIn(reading.properties.renewalTermMonths);
-        if (fired.has("renewalTermMonths") && months !== null) {
-          parts.push(`Each renewal signs you up for another ${months} months.`);
-        }
-        const days = numberIn(reading.properties.noticeWindowDays);
-        if (fired.has("noticeWindowDays") && days !== null) {
+        const months = numberIn(stated.renewalTermMonths);
+        if (fired.has("renewalTermMonths")) {
           parts.push(
-            `You have to give notice ${days} days before the term ends, so the decision comes round a long way ahead of it.`
+            months === null
+              ? "It does not say how long a further term runs, so missing one date could sign you up for a long one."
+              : `Each renewal signs you up for another ${months} months.`
+          );
+        }
+        const days = numberIn(stated.noticeWindowDays);
+        if (fired.has("noticeWindowDays")) {
+          parts.push(
+            days === null
+              ? "It does not say how much warning you have to give to stop it, which is the part you would most need in the diary."
+              : `You have to give notice ${days} days before the term ends, so the decision comes round a long way ahead of it.`
           );
         }
         if (fired.has("terminableDuringRenewal")) {
-          parts.push("Once a renewal has started, you cannot leave part-way through it.");
+          parts.push(
+            stated.terminableDuringRenewal === undefined
+              ? "And it does not say whether you can leave part-way through a renewed term."
+              : "Once a renewal has started, you cannot leave part-way through it."
+          );
         }
       } else {
         parts.push(
@@ -345,17 +432,28 @@ export function costFor(
           "for it, so the terms you read are the terms you are held to."
         );
       }
+      const stated = reading.properties;
       const parts = ["Part of what you agreed can be rewritten after you have signed it."];
       if (fired.has("changeRequiresSignerAgreement")) {
-        parts.push("A change takes effect whether you agree to it or not.");
+        parts.push(
+          stated.changeRequiresSignerAgreement === undefined
+            ? "The clause does not say that a change waits for your agreement."
+            : "A change takes effect whether you agree to it or not."
+        );
       }
       if (fired.has("whatMayChange")) {
         parts.push(
-          "What they can change reaches the money and the work, so the job you priced is not the job you are held to."
+          stated.whatMayChange === undefined
+            ? "It does not say what they can change, so you cannot tell whether the fee and the work are within reach of it."
+            : "What they can change reaches the money and the work, so the job you priced is not the job you are held to."
         );
       }
       if (fired.has("exitOnChange")) {
-        parts.push("You are given no way out of a change you would never have signed.");
+        parts.push(
+          stated.exitOnChange === undefined
+            ? "And it does not say whether you could end the arrangement over a change you did not want."
+            : "You are given no way out of a change you would never have signed."
+        );
       }
       return parts.join(" ");
     }

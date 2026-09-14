@@ -1,8 +1,8 @@
 "use server";
 
 /**
- * The two things the server does with a document a Signer has just read: explain it, and
- * keep it.
+ * The three things the server does with a document a Signer has just read: explain it,
+ * answer a question about it, and keep it.
  *
  * The text arrives from the browser, because that is where the file was opened and where
  * it stayed — the file itself never made this trip and never will (`CLAUDE.md`). What
@@ -19,6 +19,7 @@
  */
 
 import { analyze } from "@/lib/analysis/analyze";
+import { answerQuestion } from "@/lib/analysis/answer";
 import { UNDETERMINED_JURISDICTION } from "@/lib/analysis/result";
 import {
   DOCUMENT_FORMATS,
@@ -30,6 +31,7 @@ import { saveDocument } from "@/lib/supabase/documents";
 
 import type { AnalysisState, ReadDocument } from "./analysis-state";
 import type { KeepState } from "./keep-state";
+import type { QuestionState } from "./question-state";
 
 /**
  * Explain what a document commits the Signer to.
@@ -82,6 +84,69 @@ export async function explainDocument(document: ReadDocument): Promise<AnalysisS
       message:
         "The explanation did not come back. Your document is still on this page, so you " +
         "can try again.",
+    };
+  }
+}
+
+/**
+ * Answer one question about a document, from that document.
+ *
+ * The same shape as `explainDocument`, and for the same reasons. The answer is a pure
+ * function over the text and the question (`lib/analysis/answer.ts`); what only a server
+ * can do is read the environment, build the gateway and turn a failure into something a
+ * Signer can act on.
+ *
+ * The text is re-read through `readExtractedText` rather than trusted as it arrived, so a
+ * post carrying a page number's worth of words is refused here on the same rule the
+ * browser refused it on — and, more to the point, so the text a quoted sentence is matched
+ * against is the same text the analysis was matched against. A citation verified against a
+ * differently-normalized copy of the document is not verified at all.
+ *
+ * A refusal is not a failure and does not come back as one. "The contract does not say" is
+ * the seam's answer, and it arrives under `answered` like any other.
+ */
+export async function answerAboutDocument(
+  document: ReadDocument,
+  question: string
+): Promise<QuestionState> {
+  const asked = question.trim();
+  if (asked === "") {
+    return { status: "no-question" };
+  }
+
+  if (!isDocumentFormat(document.format)) {
+    return { status: "nothing-to-read" };
+  }
+
+  const reread = readExtractedText({
+    name: document.name,
+    format: document.format,
+    rawText: document.text,
+    whenEmpty: "no-text-layer",
+  });
+  if (reread.outcome === "unreadable") {
+    return { status: "nothing-to-read" };
+  }
+
+  const access = openRouterAccess();
+  if (access.outcome === "not-set-up") {
+    console.error(`model access is not set up: no ${access.missing.join(" and no ")}`);
+    return { status: "model-not-set-up" };
+  }
+
+  try {
+    const answer = await answerQuestion(
+      { documentText: reread.text, question: asked },
+      access.gateway
+    );
+    return { status: "answered", answer };
+  } catch (cause) {
+    console.error("the answer did not come back:", cause);
+    return {
+      status: "failed",
+      message:
+        "Nothing came back for that one. Your question is still here, so you can ask it " +
+        "again.",
     };
   }
 }

@@ -13,6 +13,7 @@ import { NOT_ASKED, type AnalysisState } from "./analysis-state";
 import { ClearedList } from "./cleared-list";
 import { KeepInLibrary } from "./keep-in-library";
 import { MarkedGalley } from "./marked-galley";
+import { QuestionBox } from "./question-box";
 import { readFileInBrowser } from "./read-in-browser";
 
 type Screen =
@@ -298,9 +299,10 @@ export default function ReviewPage() {
                 <p className="text-[0.94rem] leading-[1.55] text-ink-soft">
                   What is above says what the contract contains. Next is the checklist
                   Redline went through, then the terms that would cost you, marked in the
-                  wording itself. There is no drafted reply for you to send yet.
+                  wording itself with a line to send back on each one. Under that is a box
+                  for anything the marks did not cover.
                   {analysis.result.jurisdiction.source === "undetermined" &&
-                    " Redline has also not worked out which law governs this agreement."}
+                    " Redline has not worked out which law governs this agreement."}
                 </p>
               </div>
             </>
@@ -396,6 +398,19 @@ export default function ReviewPage() {
               unreadable arm carries no text to pass. */}
           <KeepInLibrary document={extracted} />
         </section>
+      )}
+
+      {/* The query box, and it stands under the marked wording rather than over it: a
+          Signer asks about what the marks did not cover, so they have to have met the
+          marks first (`.impeccable/surfaces/app-app-layout-tsx.md`).
+
+          It is offered after a reading that failed as well as after one that came back,
+          because the two calls are separate: a summary that did not arrive is no reason to
+          stop a Signer asking about the contract in front of them. It is withheld only
+          where asking could not work — nothing read on this deployment, or no text to read
+          it out of. */}
+      {extracted && (analysis.status === "explained" || analysis.status === "failed") && (
+        <QuestionBox document={extracted} />
       )}
 
       <GalleyFoot
