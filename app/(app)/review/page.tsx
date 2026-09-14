@@ -11,6 +11,7 @@ import { GalleyFoot, LABEL, Masthead, ProofMark, STAMP } from "../_components/ga
 import { explainDocument } from "./actions";
 import { NOT_ASKED, type AnalysisState } from "./analysis-state";
 import { ClearedList } from "./cleared-list";
+import { GoverningLaw, assumedLawLegend } from "./governing-law";
 import { KeepInLibrary } from "./keep-in-library";
 import { MarkedGalley } from "./marked-galley";
 import { QuestionBox } from "./question-box";
@@ -71,6 +72,14 @@ export default function ReviewPage() {
   const [screen, setScreen] = useState<Screen>({ phase: "waiting" });
   const [analysis, setAnalysis] = useState<AnalysisState>(NOT_ASKED);
   const [pasted, setPasted] = useState("");
+  // The Signer's own answer on the governing law, when they have given one. It outranks
+  // whatever the document says (`docs/adr/0007`) and it is held here rather than in the
+  // result, so a re-reading — a correction, or a retry after a failure — carries it.
+  const [chosenLaw, setChosenLaw] = useState<string | null>(null);
+  // A re-reading under a corrected law leaves the report on the screen while it runs. It
+  // is the same document and the same marks; only the law has moved, so blanking the
+  // sheet back to "working" would take away the thing the Signer was just reading.
+  const [rereading, setRereading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const head = useRef<HTMLHeadingElement>(null);
 
@@ -85,36 +94,64 @@ export default function ReviewPage() {
    * to find out what they would be agreeing to, not to press a second button. Only the
    * extracted arm has text to send, so an unreadable file cannot reach the analysis.
    */
-  async function explain(document: ExtractedDocument) {
-    setAnalysis({ status: "working" });
-    setAnalysis(
-      await explainDocument({
+  async function explain(
+    document: ExtractedDocument,
+    law: string | null = chosenLaw,
+    keepShowing = false
+  ) {
+    if (keepShowing) setRereading(true);
+    else setAnalysis({ status: "working" });
+
+    const next = await explainDocument(
+      {
         name: document.name,
         format: document.format,
         text: document.text,
-      })
+      },
+      law
     );
+    setAnalysis(next);
+    setRereading(false);
   }
 
+  /**
+   * A correction to the governing law, which is a re-reading and not a preference.
+   *
+   * The whole analysis goes back through the server action under the law the Signer
+   * named, so the claims that turn on it are written again. `docs/adr/0003` is why the
+   * marks themselves do not move: severity comes from the wording, and the wording did
+   * not change.
+   */
+  function setLaw(document: ExtractedDocument, law: string | null) {
+    setChosenLaw(law);
+    void explain(document, law, true);
+  }
+
+  // A newly read document starts with no correction on it, passed explicitly rather than
+  // read off state the call that got here has only just cleared.
   function show(result: ExtractionResult) {
     setScreen({ phase: "done", result });
-    if (result.outcome === "extracted") void explain(result);
+    if (result.outcome === "extracted") void explain(result, null);
   }
 
   async function readFile(file: File) {
     setAnalysis(NOT_ASKED);
+    setChosenLaw(null);
     setScreen({ phase: "reading", name: file.name });
     show(await readFileInBrowser(file));
   }
 
   function readPaste() {
     setAnalysis(NOT_ASKED);
+    setChosenLaw(null);
     show(readPastedText(PASTED, pasted));
   }
 
   function startOver() {
     setPasted("");
     setAnalysis(NOT_ASKED);
+    setChosenLaw(null);
+    setRereading(false);
     setScreen({ phase: "waiting" });
   }
 
@@ -123,12 +160,25 @@ export default function ReviewPage() {
   const extracted = result?.outcome === "extracted" ? result : null;
   // Worst first, as `analyze()` ranked them. Nothing on this screen re-sorts them.
   const flags = analysis.status === "explained" ? analysis.result.flags : [];
+  const jurisdiction = analysis.status === "explained" ? analysis.result.jurisdiction : null;
 
   return (
     <>
       <Masthead
         document={documentLine(screen)}
-        state={stateLine(screen, analysis)}
+        law={
+          jurisdiction === null ? undefined : (
+            // Declared here and corrected in one move, which is what `docs/adr/0007`
+            // asks the masthead for. A plain in-page link, not a new control.
+            <a
+              href="#which-law"
+              className="underline decoration-mark decoration-2 underline-offset-4 transition-colors duration-200 hover:text-ink focus-visible:text-ink"
+            >
+              {assumedLawLegend(jurisdiction)}
+            </a>
+          )
+        }
+        state={stateLine(screen, analysis, rereading)}
         alarmed={result?.outcome === "unreadable"}
       />
 
@@ -166,7 +216,7 @@ export default function ReviewPage() {
 
       {/* The state of the read, for anyone who is not watching the sheet change. */}
       <p role="status" aria-live="polite" className="sr-only">
-        {liveStatus(screen, analysis)}
+        {liveStatus(screen, analysis, rereading)}
       </p>
 
       {result?.outcome === "unreadable" && result.foundText !== "" && (
@@ -297,12 +347,10 @@ export default function ReviewPage() {
               <div className="mt-9 flex max-w-[58ch] items-start gap-3 border-t border-rule pt-5">
                 <ProofMark kind="query" className="mt-0.5 h-5 w-5 text-mark" />
                 <p className="text-[0.94rem] leading-[1.55] text-ink-soft">
-                  What is above says what the contract contains. Next is the checklist
-                  Redline went through, then the terms that would cost you, marked in the
-                  wording itself with a line to send back on each one. Under that is a box
-                  for anything the marks did not cover.
-                  {analysis.result.jurisdiction.source === "undetermined" &&
-                    " Redline has not worked out which law governs this agreement."}
+                  What is above says what the contract contains. Next is the law Redline
+                  read it under, then the checklist it went through, then the terms that
+                  would cost you, marked in the wording itself with a line to send back on
+                  each one. Under that is a box for anything the marks did not cover.
                 </p>
               </div>
             </>
@@ -336,6 +384,19 @@ export default function ReviewPage() {
             </div>
           )}
         </section>
+      )}
+
+      {/* Which law the reading was made under, declared and correctable, before either
+          list (`docs/adr/0007`). It comes first of the three because it frames the other
+          two: a Signer needs to know whose law the enforceability lines are written
+          against before they read a finding that names one, or one that pointedly does
+          not. */}
+      {extracted && analysis.status === "explained" && (
+        <GoverningLaw
+          jurisdiction={analysis.result.jurisdiction}
+          working={rereading}
+          onSet={(law) => setLaw(extracted, law)}
+        />
       )}
 
       {/* The other half of the report, and the half that only means anything because
@@ -396,7 +457,7 @@ export default function ReviewPage() {
 
           {/* Only a document that was read can be kept, and the type says so: the
               unreadable arm carries no text to pass. */}
-          <KeepInLibrary document={extracted} />
+          <KeepInLibrary document={extracted} jurisdiction={jurisdiction} />
         </section>
       )}
 
@@ -430,12 +491,13 @@ function documentLine(screen: Screen): string {
   return screen.result.name;
 }
 
-function stateLine(screen: Screen, analysis: AnalysisState): string {
+function stateLine(screen: Screen, analysis: AnalysisState, rereading: boolean): string {
   if (screen.phase === "waiting") return "Nothing read yet";
   if (screen.phase === "reading") return "Reading";
   if (screen.result.outcome === "unreadable") return "Cannot be read";
 
   const read = `${screen.result.sentences.length} sentences read`;
+  if (rereading) return `${read} · going through it again`;
   switch (analysis.status) {
     case "not-asked":
       return read;
@@ -481,7 +543,7 @@ function footState(screen: Screen): string {
   return screen.result.outcome === "extracted" ? "Sheet 1 of 1" : "Nothing to mark";
 }
 
-function liveStatus(screen: Screen, analysis: AnalysisState): string {
+function liveStatus(screen: Screen, analysis: AnalysisState, rereading: boolean): string {
   if (screen.phase === "waiting") return "";
   if (screen.phase === "reading") return `Reading ${screen.name}.`;
   if (screen.result.outcome === "unreadable") {
@@ -489,6 +551,7 @@ function liveStatus(screen: Screen, analysis: AnalysisState): string {
   }
 
   const read = `${screen.result.name} read. ${screen.result.sentences.length} sentences.`;
+  if (rereading) return `${read} Going through it again under the law you set.`;
   switch (analysis.status) {
     case "not-asked":
       return read;
@@ -505,7 +568,13 @@ function liveStatus(screen: Screen, analysis: AnalysisState): string {
       // The clean half is announced too. A reader who cannot see the list would
       // otherwise hear "nothing is marked" and have no way to tell that from silence.
       const clean = `${analysis.result.checkedClean.length} of ${CHECKLIST_ENTRIES.length} checks came back clean.`;
-      return `${read} A summary of what it commits you to is below. ${marked} ${clean}`;
+      // The law is announced too, and the unknown case loudest of all: a reader who
+      // cannot see the masthead would otherwise never learn that nothing was assumed.
+      const law =
+        analysis.result.jurisdiction.source === "undetermined"
+          ? "This contract does not say which law governs it, and Redline has not picked one."
+          : `Read under the law of ${analysis.result.jurisdiction.name}.`;
+      return `${read} A summary of what it commits you to is below. ${law} ${marked} ${clean}`;
     }
     case "model-not-set-up":
       return `${read} Redline cannot explain it on this deployment.`;

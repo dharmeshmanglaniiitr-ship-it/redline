@@ -20,29 +20,48 @@
 
 import { analyze } from "@/lib/analysis/analyze";
 import { answerQuestion } from "@/lib/analysis/answer";
-import { UNDETERMINED_JURISDICTION } from "@/lib/analysis/result";
+import { detectJurisdiction, determineJurisdiction } from "@/lib/analysis/jurisdiction";
+import type { JurisdictionDetection } from "@/lib/analysis/result";
 import {
   DOCUMENT_FORMATS,
   readExtractedText,
   type DocumentFormat,
 } from "@/lib/document/extraction";
 import { openRouterAccess } from "@/lib/model/openrouter";
-import { saveDocument } from "@/lib/supabase/documents";
+import { saveDocument, type JurisdictionRecord } from "@/lib/supabase/documents";
 
 import type { AnalysisState, ReadDocument } from "./analysis-state";
 import type { KeepState } from "./keep-state";
 import type { QuestionState } from "./question-state";
 
 /**
- * Explain what a document commits the Signer to.
+ * Explain what a document commits the Signer to, under the law that governs it.
  *
  * The analysis itself is a pure function over text (`lib/analysis/analyze.ts`). All this
  * does is what only a server can: read the environment, build the gateway, and turn
  * whatever went wrong into something a Signer can act on. A deployment with no model
  * access says so plainly rather than looking broken, and a call that failed says the
  * wording is still on the page rather than throwing the Signer back to the start.
+ *
+ * The governing law is read before the analysis rather than alongside it, because the
+ * analysis is told which law it is working under and cannot be told afterwards. That is
+ * one extra call and it buys the thing `docs/adr/0007` is about: the legal claims on the
+ * findings name a jurisdiction or withhold themselves, instead of quietly meaning the
+ * United States.
+ *
+ * `signerJurisdiction` is how a correction gets back here. The Signer outranks the
+ * document, so passing a name re-runs the whole analysis under it — the flags are read
+ * again, and the wording that turns on the law is written again. The detection still
+ * runs when they have corrected it, because the clause they overrode is worth seeing.
+ *
+ * A governing-law reading that does not come back is not a reason to refuse the
+ * analysis. It leaves the jurisdiction undetermined, which is a state this product knows
+ * how to be in, and the Signer can still set it by hand.
  */
-export async function explainDocument(document: ReadDocument): Promise<AnalysisState> {
+export async function explainDocument(
+  document: ReadDocument,
+  signerJurisdiction: string | null = null
+): Promise<AnalysisState> {
   if (!isDocumentFormat(document.format)) {
     return { status: "nothing-to-read" };
   }
@@ -63,15 +82,20 @@ export async function explainDocument(document: ReadDocument): Promise<AnalysisS
     return { status: "model-not-set-up" };
   }
 
+  let detected: JurisdictionDetection | null = null;
+  try {
+    detected = await detectJurisdiction(reread.text, access.gateway);
+  } catch (cause) {
+    console.error("the governing-law reading did not come back:", cause);
+  }
+
   try {
     const result = await analyze(
       {
         documentText: reread.text,
-        // Red lines and a jurisdiction are inputs the analysis already takes. Nothing
-        // supplies them yet — tickets 13 and 14 — and an assumed jurisdiction would be
-        // exactly the silent default ADR 0007 exists to prevent.
+        // Red lines are an input the analysis already takes; ticket 13 supplies them.
         redLines: [],
-        jurisdiction: UNDETERMINED_JURISDICTION,
+        jurisdiction: determineJurisdiction(detected, signerJurisdiction),
       },
       access.gateway
     );
@@ -176,7 +200,7 @@ export async function keepDocument(_previous: KeepState, form: FormData): Promis
     };
   }
 
-  const saved = await saveDocument(reread);
+  const saved = await saveDocument(reread, jurisdictionFrom(form));
 
   switch (saved.outcome) {
     case "saved":
@@ -192,6 +216,26 @@ export async function keepDocument(_previous: KeepState, form: FormData): Promis
         message: "The library would not take it. Nothing was saved, so try once more.",
       };
   }
+}
+
+/**
+ * What the analysis assumed about governing law, carried into the library with the text.
+ *
+ * `docs/adr/0007` asks for this: a Signer opening a document six months from now has to
+ * be able to tell what they were told, and a finding that said "a question for the law of
+ * Ireland" means nothing later if the row does not remember Ireland. The detection and
+ * the Signer's own choice are stored separately, because they are two different claims —
+ * the database enforces that a detection without its sentence cannot be written at all.
+ */
+function jurisdictionFrom(form: FormData): JurisdictionRecord {
+  const name = String(form.get("detectedJurisdiction") ?? "").trim();
+  const sentence = String(form.get("detectedJurisdictionSentence") ?? "").trim();
+  const chosen = String(form.get("chosenJurisdiction") ?? "").trim();
+
+  return {
+    detected: name !== "" && sentence !== "" ? { jurisdiction: name, sourceSentence: sentence } : null,
+    chosenBySigner: chosen === "" ? null : chosen,
+  };
 }
 
 function isDocumentFormat(value: string): value is DocumentFormat {

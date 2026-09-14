@@ -17,12 +17,24 @@ Implement the determination mechanism settled in ticket 03.
 
 **Blocked by:** 03, 08
 
-**Status:** ready-for-agent
+**Status:** done — 2026-09-14. `lib/analysis/jurisdiction.ts` implements ADR 0007 in two
+halves: `detectJurisdiction` (a gateway call whose quoted governing-law sentence is
+verified verbatim, so a detection the document does not contain is null rather than a
+guess) and `determineJurisdiction` (pure; Signer beats document beats nothing). Correcting
+it re-runs the whole analysis through the server action.
 
-- [ ] Jurisdiction is an explicit input to the analysis, not an implicit assumption
-- [ ] An unknown jurisdiction is surfaced to the Signer rather than defaulted to US law
-- [ ] The Signer can see which jurisdiction the analysis assumed, and correct it
-- [ ] Correcting the jurisdiction re-runs or re-ranks the analysis accordingly
-- [ ] Enforceability claims are worded relative to the governing jurisdiction, never as
+Severity is asserted invariant across jurisdictions flag by flag — id, clause type,
+severity, citation, title, hedge, unstated properties and counter-offer — because under
+ADR 0003 severity comes from textual facts and only the legal claims move.
+
+The two trap fixtures are asserted to still carry their UK addresses and currency *and* to
+detect nothing, so the test fails both if the detector starts guessing from a locale and
+if someone defuses the fixtures. Live behaviour untested (HTTP 429).
+
+- [x] Jurisdiction is an explicit input to the analysis, not an implicit assumption
+- [x] An unknown jurisdiction is surfaced to the Signer rather than defaulted to US law
+- [x] The Signer can see which jurisdiction the analysis assumed, and correct it
+- [x] Correcting the jurisdiction re-runs or re-ranks the analysis accordingly
+- [x] Enforceability claims are worded relative to the governing jurisdiction, never as
       universal fact
-- [ ] The determination mechanism matches the decision recorded in ticket 03
+- [x] The determination mechanism matches the decision recorded in ticket 03

@@ -7,6 +7,8 @@
  * working views behind sign-in do not each grow their own version.
  */
 
+import type { ReactNode } from "react";
+
 export type MarkKind = "caret" | "strike" | "query" | "check";
 
 /**
@@ -116,13 +118,23 @@ export const LABEL =
 /**
  * The legend row that opens the sheet: what the document is on the left, what state it
  * is in on the right. It is the first thing on the page, with no chrome above it.
+ *
+ * `law` is the third thing a sheet can declare, and it sits between them because it is
+ * the middle claim: which law the reading was made under (`docs/adr/0007`). It is
+ * omitted only where there is no reading to declare it for, never to hide that the law is
+ * unknown, which is a state the legend says out loud. It takes a node rather than a
+ * string so the declaration can carry a link to the place the law is corrected, which is
+ * what `docs/adr/0007` asks the masthead for.
  */
 export function Masthead({
   document,
+  law,
   state,
   alarmed = false,
 }: {
   document: string;
+  /** The law the analysis read under, already written for this register. */
+  law?: ReactNode;
   state: string;
   /** Draws the state in the correcting hand, for a document that could not be read. */
   alarmed?: boolean;
@@ -130,6 +142,7 @@ export function Masthead({
   return (
     <div className="numeric flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b-2 border-ink pb-3 text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-ink">
       <span>{document}</span>
+      {law !== undefined && <span className="text-ink-soft">{law}</span>}
       <span className={alarmed ? "flex items-center gap-2 text-mark-deep" : "text-ink-soft"}>
         {alarmed && <ProofMark kind="strike" className="h-4 w-4" />}
         {state}

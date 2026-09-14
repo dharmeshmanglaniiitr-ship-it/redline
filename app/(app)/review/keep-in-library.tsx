@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 
+import type { Jurisdiction } from "@/lib/analysis/result";
 import type { ExtractedDocument } from "@/lib/supabase/documents";
 
 import { LABEL, ProofMark, STAMP } from "../_components/galley";
@@ -22,9 +23,29 @@ import { UNTOUCHED } from "./keep-state";
  * the reading is behind the account, and the Signer is not asked to sign in to finish
  * what they were doing.
  */
-export function KeepInLibrary({ document }: { document: ExtractedDocument }) {
+export function KeepInLibrary({
+  document,
+  jurisdiction,
+}: {
+  document: ExtractedDocument;
+  /**
+   * What the analysis assumed about governing law, kept with the text so a Signer coming
+   * back in six months can tell what they were told (`docs/adr/0007`). Null while there
+   * is no analysis to have assumed anything.
+   */
+  jurisdiction: Jurisdiction | null;
+}) {
   const signer = useSignerState();
   const [state, keep, working] = useActionState(keepDocument, UNTOUCHED);
+  const detected =
+    jurisdiction === null
+      ? null
+      : jurisdiction.source === "document"
+        ? { name: jurisdiction.name, sourceSentence: jurisdiction.sourceSentence }
+        : jurisdiction.source === "signer"
+          ? jurisdiction.detected
+          : null;
+  const chosen = jurisdiction?.source === "signer" ? jurisdiction.name : "";
 
   const aside =
     "mt-3 max-w-[58ch] text-[0.94rem] leading-[1.55] text-ink-soft";
@@ -84,6 +105,13 @@ export function KeepInLibrary({ document }: { document: ExtractedDocument }) {
           <input type="hidden" name="name" value={document.name} />
           <input type="hidden" name="format" value={document.format} />
           <input type="hidden" name="text" value={document.text} />
+          <input type="hidden" name="detectedJurisdiction" value={detected?.name ?? ""} />
+          <input
+            type="hidden"
+            name="detectedJurisdictionSentence"
+            value={detected?.sourceSentence ?? ""}
+          />
+          <input type="hidden" name="chosenJurisdiction" value={chosen} />
           <p className={aside}>
             Kept against {signer.signer.email}. The text goes to the library. The file
             does not, because it never left your machine.
