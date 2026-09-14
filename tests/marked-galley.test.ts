@@ -149,6 +149,35 @@ describe("the marked proof", () => {
     expect(html).toMatch(/font-document[^"]*"[^>]*>Clause /);
   });
 
+  it("shows the wording to send back beside the finding it answers", async () => {
+    // The counter-offer belongs with its own flag rather than in a list of its own, and
+    // it opens under the cost: what the clause would do, then what to say about it. Only
+    // the selected finding's margin card is open, so only its redraft is on the screen.
+    const { flags, html } = await renderFixture("adhesion-contract.txt");
+    const selected = flags[0];
+    const offer = selected.counterOffer;
+    if (offer === null) throw new Error("the worst finding came back with no counter-offer");
+
+    const text = readable(html);
+    expect(text).toContain("What to send back");
+    expect(text.indexOf(selected.cost)).toBeLessThan(text.indexOf(offer.replacement));
+    expect(text).toContain(offer.replacement);
+    // The whole message, so what is on the screen is what gets pasted into a reply.
+    expect(text).toContain(offer.text);
+  });
+
+  it("sets the clause text inside a counter-offer in the document's own face", async () => {
+    // `DESIGN.md`, The Two Voices Rule, on the one block that carries both voices at
+    // once: the clause as it stands and the clause as asked for are the document's
+    // words, the note around them is the Signer's.
+    const { flags, html } = await renderFixture("retainer-exposed.txt");
+    const offer = flags[0].counterOffer;
+    if (offer === null) throw new Error("the worst finding came back with no counter-offer");
+
+    const escaped = offer.replacement.replace(/'/g, "&#x27;");
+    expect(html).toContain(`class="font-document text-ink">${escaped}</span>`);
+  });
+
   it("marks nothing on a contract that produced no findings", async () => {
     const { flags, html } = await renderFixture("balanced-contract.txt");
     expect(flags).toEqual([]);

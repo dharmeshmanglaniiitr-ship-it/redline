@@ -21,7 +21,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { ClauseType } from "@/lib/analysis/clauses";
-import type { RiskFlag } from "@/lib/analysis/result";
+import type { CounterOffer, RiskFlag } from "@/lib/analysis/result";
 import { severityWord } from "@/lib/analysis/wording";
 import { clauseReferenceIn, markUpDocument } from "@/lib/text/marking";
 
@@ -289,7 +289,13 @@ export function MarkedGalley({
  * A button rather than a link or a div, carrying `aria-pressed` for its state and
  * `aria-controls` pointing at the sentence it marks, so the tie between the two halves
  * is in the markup and not only in the drawn leader. Opening it shows what the clause
- * would cost, at 40ch, and the hedge under that where the contract left something out.
+ * would cost, at 40ch, the hedge under that where the contract left something out, and
+ * the wording to send back under that again.
+ *
+ * The counter-offer is last and it opens with the cost, because the order is the order a
+ * Signer decides in: what this clause would do to me, what Redline could not tell from
+ * the text, and then what to say about it. Putting the redraft first would be handing
+ * them a reply to send before they had read why.
  */
 function MarginMark({
   flag,
@@ -345,8 +351,81 @@ function MarginMark({
               <span>{flag.hedgeNote}</span>
             </p>
           )}
+          {flag.counterOffer && <DraftedReply offer={flag.counterOffer} />}
         </>
       )}
     </>
   );
+}
+
+/**
+ * The wording to send back, set in two voices.
+ *
+ * The clause as it stands and the clause as it would read are the document's words, so
+ * they are set in the document's face; everything around them is the Signer's own note
+ * and is set in the product's. That is `DESIGN.md`'s Two Voices Rule applied to a block
+ * that genuinely contains both, and it is not only typographic — it is what lets a
+ * Signer see at a glance which part of this goes into the contract and which part is the
+ * covering line.
+ *
+ * The message is rendered whole rather than in pieces, with the blank lines it was
+ * written with, because the whole of it is what gets pasted into a reply.
+ */
+function DraftedReply({ offer }: { offer: CounterOffer }) {
+  const parts = useMemo(
+    () => inTwoVoices(offer.text, [offer.replacement, offer.replaces]),
+    [offer]
+  );
+
+  return (
+    <div className="mt-3 max-w-[40ch] border-t border-rule pt-3">
+      <h4 className={LABEL}>What to send back</h4>
+      <p className="mt-2 whitespace-pre-line text-[0.9rem] leading-[1.55] text-ink-soft">
+        {parts.map((part, index) =>
+          part.quoted ? (
+            <span key={index} className="font-document text-ink">
+              {part.text}
+            </span>
+          ) : (
+            <span key={index}>{part.text}</span>
+          )
+        )}
+      </p>
+    </div>
+  );
+}
+
+/** One run of the drafted message, and whether it is clause text or the note around it. */
+interface Voiced {
+  readonly text: string;
+  readonly quoted: boolean;
+}
+
+/**
+ * Cut the message at the clause text inside it.
+ *
+ * Longest first, because a counter-offer that keeps the clause and adds a line to it has
+ * the old sentence sitting inside the new one — split on the short one first and the
+ * long one is no longer there to find.
+ */
+function inTwoVoices(text: string, quotes: readonly string[]): Voiced[] {
+  let parts: Voiced[] = [{ text, quoted: false }];
+
+  for (const quote of [...quotes].sort((a, b) => b.length - a.length)) {
+    if (quote === "") continue;
+    const next: Voiced[] = [];
+    for (const part of parts) {
+      if (part.quoted) {
+        next.push(part);
+        continue;
+      }
+      part.text.split(quote).forEach((piece, index) => {
+        if (index > 0) next.push({ text: quote, quoted: true });
+        if (piece !== "") next.push({ text: piece, quoted: false });
+      });
+    }
+    parts = next;
+  }
+
+  return parts;
 }

@@ -95,8 +95,16 @@ function buildFinding(clause: PlantedClause): JsonObject {
       ? `The contract does not say ${clause.unstatedProperties.join(" or ")}.`
       : null,
     cost: COST_OF[clause.clauseType] ?? "this clause is worth reading twice",
-    // Counter-offers reference the clause language they replace (PRD §4 test 6).
-    counterOffer: `Replace "${opening(clause.sourceSentence)}" with wording that does not leave ${clause.clauseType} open-ended.`,
+    // A counter-offer names the sentence it replaces structurally rather than in prose
+    // (`PRD.md` §4 test 6), so the field is an object carrying that sentence and not a
+    // paragraph with a quotation buried in it. `analyze()` does not read this: it drafts
+    // its own in `lib/analysis/counter-offer.ts`, because language a Signer sends to
+    // their client is written and reviewed rather than generated per request. What this
+    // is for is the gateway contract, which `tests/stub-model.test.ts` exercises.
+    counterOffer: {
+      replaces: clause.sourceSentence,
+      text: `Could we narrow the clause beginning "${opening(clause.sourceSentence)}"?`,
+    },
   };
 }
 

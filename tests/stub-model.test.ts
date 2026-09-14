@@ -32,7 +32,7 @@ interface Finding {
   readonly hedgeNote: string | null;
   readonly unstatedProperties: readonly string[];
   readonly cost: string;
-  readonly counterOffer: string;
+  readonly counterOffer: { readonly replaces: string; readonly text: string };
 }
 
 interface Report {
@@ -84,7 +84,7 @@ const reportSchema: ResponseSchema<Report> = {
             (item, i) => string(item, `unstatedProperties[${i}]`)
           ),
           cost: string(finding.cost, "cost"),
-          counterOffer: string(finding.counterOffer, "counterOffer"),
+          counterOffer: counterOffer(finding.counterOffer),
         };
       }),
       checkedClean: array(root.checkedClean, "checkedClean").map((entry, index) =>
@@ -135,7 +135,8 @@ describe("the stub model gateway", () => {
     for (const finding of report.findings) {
       expectQuotedVerbatim(fixture.text, finding.sourceSentence);
       expectHedgeMatchesProvenance(finding);
-      expect(finding.counterOffer).toContain(finding.sourceSentence.slice(0, 40));
+      // The clause being replaced is carried as the sentence itself, not described.
+      expect(finding.counterOffer.replaces).toBe(finding.sourceSentence);
     }
   });
 
@@ -233,6 +234,17 @@ function string(value: JsonValue | undefined, where: string): string {
     throw new ModelResponseError(where, "expected a string");
   }
   return value;
+}
+
+function counterOffer(value: JsonValue | undefined): {
+  readonly replaces: string;
+  readonly text: string;
+} {
+  const offer = object(value, "counterOffer");
+  return {
+    replaces: string(offer.replaces, "counterOffer.replaces"),
+    text: string(offer.text, "counterOffer.text"),
+  };
 }
 
 function number(value: JsonValue | undefined, where: string): number {

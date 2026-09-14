@@ -88,11 +88,21 @@ export interface DocumentSummary {
   readonly plainEnglish: string;
 }
 
-/** Wording the Signer can send back, and the clause language it replaces (user story 17). */
+/**
+ * Wording the Signer can send back, and the clause language it replaces (user story 17).
+ *
+ * Three fields rather than one, because the reference to the replaced language has to be
+ * structural rather than implied in prose. `replaces` is the flag's own verified citation
+ * and `replacement` is the contract wording asked for in its place; `text` is the whole
+ * message, and it contains both of them verbatim, so the record and the thing the Sender
+ * actually receives cannot come apart (`lib/analysis/counter-offer.ts`).
+ */
 export interface CounterOffer {
-  /** The sentence being replaced — the flag's own citation. */
+  /** The sentence being replaced — the flag's own citation, unchanged. */
   readonly replaces: string;
-  /** The redraft, in language that can go back to the Sender as it stands. */
+  /** The contract wording asked for in its place, on its own. */
+  readonly replacement: string;
+  /** The whole message, sendable as it stands, carrying both of the above verbatim. */
   readonly text: string;
 }
 
@@ -122,7 +132,11 @@ interface FlagOfClause<T extends ClauseType> {
   readonly hedged: boolean;
   /** The hedge itself, naming what is missing. Null exactly when `hedged` is false. */
   readonly hedgeNote: string | null;
-  /** Null until one is drafted. Never a placeholder, because a fake redraft gets sent. */
+  /**
+   * The wording to send back. Null only where none was drafted — never a placeholder,
+   * because a fake redraft is a thing a Signer would paste into a reply to their client.
+   * Every flag `analyze()` returns carries a real one (`lib/analysis/counter-offer.ts`).
+   */
   readonly counterOffer: CounterOffer | null;
 }
 
@@ -132,8 +146,7 @@ export type RiskFlag = { [T in ClauseType]: FlagOfClause<T> }[ClauseType];
 /**
  * Everything the analysis found in one document.
  *
- * `flags` and `checkedClean` are populated by tickets 08 and 09; counter-offers arrive
- * with ticket 11 and are null until then. An empty list anywhere here is the analysis
+ * An empty list anywhere here is the analysis
  * reporting what it has — not a stub, and not a clean bill either: the screen says which
  * of them Redline has actually looked for, because a quiet result that reads like a
  * passed contract is the most dangerous thing this product could show

@@ -13,9 +13,8 @@
  * scanned contract must never come back looking like a contract with nothing wrong in
  * it.
  *
- * What it returns is the whole `AnalysisResult` shape. The summary, the risk flags and
- * the checked-clean list are populated here; counter-offers arrive in ticket 11 and
- * return through this same function.
+ * What it returns is the whole `AnalysisResult` shape: the summary, the risk flags with
+ * a drafted counter-offer on each of them, and the checked-clean list.
  *
  * Three jobs, three calls, because they are three different readings of the same text
  * and one failing is not a reason to lose the others' prompts. What keeps them honest is
@@ -41,6 +40,11 @@ import { ModelResponseError } from "@/lib/model/types";
 
 import { clearedList, type ChecklistVerdict } from "./checklist";
 import { createCitationVerifier } from "./citation";
+import {
+  contractVocabulary,
+  counterOfferFor,
+  type ContractVocabulary,
+} from "./counter-offer";
 import type {
   AnalysisResult,
   DocumentSummary,
@@ -453,11 +457,22 @@ function flagsResponse(
         }))
         .sort((a, b) => b.severity - a.severity || a.at - b.at);
 
+      // Read once for the document rather than once per flag: the parties' defined terms
+      // are a fact about the contract, and every redraft over it speaks in the same ones.
+      const vocabulary = contractVocabulary(documentText);
+
       const ordinals = new Map<ClauseType, number>();
       return ranked.map((entry) => {
         const ordinal = (ordinals.get(entry.reading.clauseType) ?? 0) + 1;
         ordinals.set(entry.reading.clauseType, ordinal);
-        return flagFrom(entry.reading, entry.sourceSentence, entry.severity, ordinal, jurisdiction);
+        return flagFrom(
+          entry.reading,
+          entry.sourceSentence,
+          entry.severity,
+          ordinal,
+          jurisdiction,
+          vocabulary
+        );
       });
     },
   };
@@ -473,16 +488,24 @@ function flagsResponse(
  * `unstatedPropertiesOf`, so `hedged === unstatedProperties.length > 0` and the hedge
  * names exactly those properties, by construction rather than by care (`docs/adr/0006`).
  *
- * The title and the cost are written in `lib/analysis/wording.ts`, not by the model:
- * every word a Signer reads in this product has been through the humanizer skill before
- * it shipped, and prose invented at request time has not (`CLAUDE.md`).
+ * The title, the cost and the counter-offer are written in `lib/analysis/wording.ts` and
+ * `lib/analysis/counter-offer.ts`, not by the model: every word a Signer reads in this
+ * product has been through the humanizer skill before it shipped, and prose invented at
+ * request time has not (`CLAUDE.md`). That argument is at its strongest on the redraft,
+ * which is not only read but sent, under the Signer's own name.
+ *
+ * The counter-offer's `replaces` is this flag's own `sourceSentence`, handed straight
+ * across. So a redraft can only ever claim to replace a sentence the citation check
+ * upstream has already matched against the document, and `docs/adr/0001` covers the
+ * counter-offer without a second mechanism.
  */
 function flagFrom(
   reading: ClauseReading,
   sourceSentence: string,
   severity: Severity,
   ordinal: number,
-  jurisdiction: Jurisdiction
+  jurisdiction: Jurisdiction,
+  vocabulary: ContractVocabulary
 ): RiskFlag {
   const triggers = severityTriggers(reading);
   const common = {
@@ -491,9 +514,7 @@ function flagFrom(
     severity,
     title: titleFor(reading, triggers),
     cost: costFor(reading, triggers, jurisdiction),
-    // Ticket 11 drafts these. Null rather than a placeholder, because a placeholder
-    // redraft is a thing a Signer would send to their client.
-    counterOffer: null,
+    counterOffer: counterOfferFor(reading, sourceSentence, triggers, vocabulary),
   };
 
   switch (reading.clauseType) {

@@ -188,12 +188,16 @@ describe("risk flags", () => {
     }
   });
 
-  it("leaves the counter-offer empty rather than filling it with a placeholder", async () => {
-    // Ticket 11's job. A placeholder redraft is a thing a Signer would paste into a
-    // reply to their client, so the field stays null until there is a real one.
+  it("carries a drafted counter-offer on every flag it returns", async () => {
+    // The field was null until ticket 11 rather than holding a placeholder, because a
+    // placeholder redraft is a thing a Signer would paste into a reply to their client.
+    // Now a flag without one is the failure. What the redraft says is asserted in
+    // `tests/counter-offers.test.ts`; this is the seam's half of it.
     const { flags } = await flagsFor("adhesion-contract.txt");
+    expect(flags.length).toBeGreaterThan(0);
     for (const flag of flags) {
-      expect(flag.counterOffer).toBeNull();
+      expect(flag.counterOffer, flag.id).not.toBeNull();
+      expect(flag.counterOffer?.replaces).toBe(flag.sourceSentence);
     }
   });
 });

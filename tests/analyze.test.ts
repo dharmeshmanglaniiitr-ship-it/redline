@@ -245,6 +245,8 @@ function nonCompeteFlag(clause: PlantedClause): RiskFlag {
       unstated.length > 0 ? `The contract does not say ${unstated.join(" or ")}.` : null,
     counterOffer: {
       replaces: clause.sourceSentence,
+      replacement:
+        "The restriction in this clause runs for three (3) months, applies only to the services in Schedule 1, and is paid for at the rate agreed in writing.",
       text: "Cut the restriction to three months, limit it to the work in Schedule 1, and pay for it.",
     },
   };
