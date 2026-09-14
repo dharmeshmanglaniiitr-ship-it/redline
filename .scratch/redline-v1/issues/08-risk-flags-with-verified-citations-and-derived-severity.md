@@ -38,7 +38,31 @@ are worded.
 
 **Blocked by:** 02, 06, 07
 
-**Status:** ready-for-agent
+**Status:** ready-for-agent — partially done. A previous run was cut off mid-ticket by a
+session limit, but its work survived and is committed. **Three modules already exist and
+should be read before anything is written:**
+
+- `lib/analysis/severity.ts` — `deriveSeverity()`, `severityTriggers()` and
+  `unstatedPropertiesOf()`. Severity is computed in code from extracted clause
+  properties, never asked of the model, which is what criterion 6 requires.
+- `lib/analysis/citation.ts` — `createCitationVerifier()`, `citationVerifies()` and
+  `keepVerifiedCitations()`. Exact-string verification against the document text.
+- `lib/analysis/wording.ts` — `severityWord()`, `hedgeNoteFor()`, `titleFor()`,
+  `costFor()`, `flagId()`. Applies the ADR 0006 hedging trigger to how a finding reads.
+
+All three compile and the suite is green, but **nothing imports them yet** and they have
+no tests of their own. Do not rewrite them from scratch. What remains:
+
+1. Unit tests for `deriveSeverity` and the citation verifier, including a paraphrased
+   quote that must be dropped rather than shown with a caveat.
+2. Prompting the model for clause readings (type, exact sentence, properties stated vs
+   not) and wiring the three modules into `analyze()` so `flags` stops coming back `[]`.
+3. The screen: the paired mark, the severity meter's three channels, the leader rule at
+   1024px and up only.
+4. The paired-fixture tests that separate a real analysis from a category lookup.
+
+Note: the live model returns HTTP 429 from the pinned provider's shared pool, so all of
+this is testable against the fixture stub only. Do not route around it.
 
 - [ ] Flags render in severity order, worst first
 - [ ] Every flag quotes the exact sentence it came from

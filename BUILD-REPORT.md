@@ -24,6 +24,36 @@ the repo previously recorded as open, and you may disagree with them.
 
 ---
 
+## Where this run stopped, and how to resume
+
+The run ended mid-ticket-08 when the Claude session limit was reached. Nothing was lost
+and nothing is broken: the working tree is clean, `npm test` is green, and every ticket's
+`Status:` line is accurate. Resuming is safe.
+
+**To resume:** start a fresh session and paste the same `/mattpocock-skills:implement`
+prompt. It reads every ticket's Status line and picks up at the first one not done, which
+is **ticket 08**.
+
+**Ticket 08 is partially built.** Three modules landed before the run stopped and are
+committed: `lib/analysis/severity.ts`, `lib/analysis/citation.ts` and
+`lib/analysis/wording.ts`. They compile, but nothing imports them and they have no tests
+of their own. Ticket 08's Status line lists exactly what remains. They should be read and
+built on, not rewritten.
+
+**Two things the next run needs to be told, because a fresh agent cannot infer them:**
+
+1. **The live model is unreachable.** Every OpenRouter call returns HTTP 429 from the
+   pinned provider's shared pool. Authentication, routing and pricing are all confirmed
+   working — this is purely an upstream shared-limit problem, not a misconfiguration.
+   Adding your own Fireworks key at `https://openrouter.ai/settings/integrations` clears
+   it. Until then `npm run smoke` against the real model cannot be run, and every claim
+   about live model behaviour in this build is untested.
+2. **Supabase has never run.** Per-Signer isolation is designed, not delivered. Apply
+   `supabase/migrations/` to a scratch project, set the three `SUPABASE_TEST_*` variables,
+   and run `npm test` to turn the skipped isolation test green.
+
+---
+
 ## Status
 
 Filled in as tickets complete. See each ticket's own `Status:` line for detail.
@@ -37,7 +67,7 @@ Filled in as tickets complete. See each ticket's own `Status:` line for detail.
 | 05 | Sign-in and per-Signer isolation | 5/7 — blocked on a database |
 | 06 | Fixture corpus and test harness | done |
 | 07 | Analysis seam — plain-English summary | done (live model unreached) |
-| 08 | Risk flags — verified citations, derived severity | pending |
+| 08 | Risk flags — verified citations, derived severity | partially built |
 | 09 | The checked-clean list | pending |
 | 10 | Settle remaining checklist thresholds | pending |
 | 11 | Counter-offers | pending |
