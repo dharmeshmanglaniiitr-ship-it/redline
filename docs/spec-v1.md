@@ -161,6 +161,14 @@ wording — but the jurisdiction-dependent claims ADR 0007 enumerates are withhe
 stated as depending on law the contract doesn't name. Those claims are always stated
 relative to the governing jurisdiction, never as universal fact.
 
+**A saved document shows the reading it was saved with** (ADR 0010). The analysis is
+stored alongside the text — summary, every flag with its verified citation, the cleared
+checklist and the standard it was marked against — so opening a document from the library
+makes no model call and shows what the Signer acted on rather than what the current prompts
+would say. The record is immutable. A fresh reading is offered on the saved sheet, labelled
+as made just now, and is never written down; which of the two is on the screen is always
+stated.
+
 **Only extracted text is stored, never the original file** (`CLAUDE.md`). Per-Signer
 isolation is enforced with Supabase Row Level Security so no query can return another
 Signer's documents. Model calls go through OpenRouter.
@@ -281,14 +289,13 @@ upload it, not because v1 has a marketing programme.
 
 **Open questions carried in from the brief.**
 
-Two questions this spec originally carried as open have since been settled and are
-recorded here only so nobody goes looking for them: the hedging trigger is ADR 0006,
-and how jurisdiction is determined is ADR 0007. Both are folded into Implementation
-Decisions above. What remains open:
-
-- Story 28 assumes a saved document shows the analysis as stored. Stored analyses and
-  current model output will diverge as prompts change. Whether a returning Signer sees
-  the stored analysis, a re-run, or both is not decided.
+Three questions this spec originally carried as open have since been settled and are
+recorded here only so nobody goes looking for them: the hedging trigger is ADR 0006, how
+jurisdiction is determined is ADR 0007, and what a returning Signer sees on a saved
+document is ADR 0010 — the reading it was saved with, stored in full and shown with no
+model call, with a fresh reading offered on request, labelled as today's, and never
+written over the record. All three are folded into Implementation Decisions above. What
+remains open:
 - The landing page has no conversion goal. Stories 32–36 all describe understanding,
   not action, and nothing in the repo says what a Signer is meant to *do* on the page
   or what happens when they do it. `CLAUDE.md` excludes payments, so there is no

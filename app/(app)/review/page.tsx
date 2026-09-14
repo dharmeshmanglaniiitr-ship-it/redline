@@ -496,7 +496,10 @@ export default function ReviewPage() {
 
           {/* Only a document that was read can be kept, and the type says so: the
               unreadable arm carries no text to pass. */}
-          <KeepInLibrary document={extracted} jurisdiction={jurisdiction} />
+          <KeepInLibrary
+            document={extracted}
+            analysis={analysis.status === "explained" ? analysis.result : null}
+          />
         </section>
       )}
 

@@ -28,11 +28,20 @@ export function AccountLine({ state }: { state: SignerState }) {
             <span className={label}>Signed in</span>
             <span className="text-[0.88rem] text-field-ink">{state.signer.email}</span>
           </p>
-          <form action={signOut}>
-            <button type="submit" className={action}>
-              Sign out
-            </button>
-          </form>
+          {/* The way into the library lives here rather than above the sheet, because
+              `DESIGN.md` keeps chrome off the proof stock and because a Signer's kept
+              documents belong to their account. Sign-out is a form rather than a link
+              because it changes something; the library is a place, so it is a link. */}
+          <div className="flex flex-wrap items-baseline gap-x-7 gap-y-2">
+            <Link href="/library" className={action}>
+              Your library
+            </Link>
+            <form action={signOut}>
+              <button type="submit" className={action}>
+                Sign out
+              </button>
+            </form>
+          </div>
         </>
       )}
 

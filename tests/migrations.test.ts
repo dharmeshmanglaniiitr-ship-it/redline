@@ -136,6 +136,26 @@ describe.each(schema.tables.map((table) => [table.qualifiedName, table] as const
       }
     });
 
+    it("goes with the account when the account is closed", () => {
+      // A Signer who closes their account has withdrawn permission to hold any of this:
+      // the contracts, what Redline said about them, and the standard they were marked
+      // against. Both migrations say in prose that the reference cascades; a table added
+      // later without it would leave one Signer's confidential work in the database after
+      // the account that owned it was gone, and nothing else in this repo would notice.
+      const owning = table.columns.filter((column) =>
+        /\breferences\s+auth\s*\.\s*users\b/i.test(column.definition)
+      );
+
+      for (const column of owning) {
+        expect(
+          /\bon\s+delete\s+cascade\b/i.test(column.definition),
+          `${qualifiedName}.${column.name} (${table.file}) points at auth.users without ` +
+            "`on delete cascade`, so closing the account would leave this Signer's rows " +
+            "behind rather than taking them with it"
+        ).toBe(true);
+      }
+    });
+
     it("has at least one policy", () => {
       // Row level security with no policy denies everything, which is safe but means the
       // table is unreachable. Either way it is not what anyone intended.

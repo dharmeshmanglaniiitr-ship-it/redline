@@ -17,12 +17,45 @@ system would no longer draw.
 
 **Blocked by:** 05, 08
 
-**Status:** ready-for-agent
+**Status:** built, one criterion blocked on a database — 2026-09-14. The stored reading,
+its migration, the list, the saved sheet and the decision are done; four of five criteria
+are met. The fifth turns on row level security actually being enforced, which needs a
+Supabase project, and is left unticked rather than claimed — the same position tickets 05
+and 13 are in.
 
-- [ ] A Signer sees a list of the documents they have analysed
-- [ ] Opening a saved document shows its analysis without requiring a re-run
-- [ ] Only extracted text is stored; no original file is retained
+`docs/adr/0010` records the decision the ticket left open: **the reading a document was
+saved with is the record, and a re-reading never replaces it.** The analysis is stored in
+full beside the text, so opening a saved document makes no model call and works on a
+deployment whose model is unreachable. The record is immutable: one reading per document,
+and a trigger that refuses every update to it. A fresh reading is offered on the saved
+sheet, labelled as made just now, and is never written down. Which of the two is on the
+screen is said in the masthead, under the head, and in the live region.
+
+The brand on `checkedClean` cannot cross a database, so it is rebuilt on the way out by
+`clearedList` from the stored entries and the stored flags — an entry a stored flag
+contradicts cannot come back clean however the row was written. Every stored citation is
+checked against the document's own stored text on the way in and again on the way out, and
+a reading that does not hold up is reported as one that could not be read back, never as a
+shorter list of findings.
+
+- [x] A Signer sees a list of the documents they have analysed
+- [x] Opening a saved document shows its analysis without requiring a re-run
+      `tests/library.test.ts` renders the real saved sheet from a stored reading with no
+      model gateway anywhere in the test.
+- [x] Only extracted text is stored; no original file is retained
+      Structural three times over: `saveDocument` takes the one arm of `ExtractionResult`
+      that carries text, the new migration has no binary, base64 or bucket column, and
+      `tests/migrations.test.ts` fails any migration that adds one.
 - [ ] The library is covered by per-Signer Row Level Security, verified by a
       cross-Signer read test
-- [ ] The stored-versus-re-run question is explicitly decided, and the Signer can tell
+      — **written, not proven.** `public.document_readings` has row level security, four
+      policies scoped to `auth.uid()`, an insert policy that also requires the document to
+      be one the session can see, and `revoke all ... from anon`.
+      `tests/integration/signer-isolation.test.ts` now makes the cross-Signer reads,
+      updates, deletes and inserts against the readings table for real — and skips,
+      because there is no Supabase project and no migration has been applied anywhere.
+      `tests/migrations.test.ts` asserts over the SQL without a database and is not a
+      substitute.
+- [x] The stored-versus-re-run question is explicitly decided, and the Signer can tell
       which they are looking at
+      `docs/adr/0010`, and the "Which reading this is" block on the saved sheet.

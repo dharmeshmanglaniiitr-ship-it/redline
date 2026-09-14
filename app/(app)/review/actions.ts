@@ -21,7 +21,13 @@
 import { analyze } from "@/lib/analysis/analyze";
 import { answerQuestion } from "@/lib/analysis/answer";
 import { detectJurisdiction, determineJurisdiction } from "@/lib/analysis/jurisdiction";
-import type { JurisdictionDetection } from "@/lib/analysis/result";
+import { readBackReading, recordReading } from "@/lib/analysis/reading";
+import {
+  UNDETERMINED_JURISDICTION,
+  type AnalysisResult,
+  type Jurisdiction,
+  type JurisdictionDetection,
+} from "@/lib/analysis/result";
 import {
   DOCUMENT_FORMATS,
   readExtractedText,
@@ -287,19 +293,39 @@ function withProblem(outcome: RedLinesOutcome, problem: string): RedLinesState {
   return state.status === "held" ? { ...state, problem } : state;
 }
 
-export async function keepDocument(_previous: KeepState, form: FormData): Promise<KeepState> {
-  const name = String(form.get("name") ?? "").trim();
-  const format = String(form.get("format") ?? "");
-  const text = String(form.get("text") ?? "");
+/**
+ * Keep a document, and keep what Redline said about it (`docs/adr/0010`).
+ *
+ * The reading goes in with the text because a library that kept only the wording would
+ * make a Signer re-run an analysis to remember what it said, which is the one thing user
+ * story 28 asks not to have to do. What is stored is what they were shown — this does not
+ * read the document again on the way past, because a second reading at save time could
+ * disagree with the one on their screen and they would be filing something they never saw.
+ *
+ * The document and the analysis arrive as arguments rather than as form fields, so the
+ * client half cannot post half a reading. That types the call; it does not make it true.
+ * A server action's parameter type is a claim about the caller, and this runs on what a
+ * browser sent, so the analysis is put back through `readBackReading` against the text
+ * that came with it: every citation is checked against the document again, the cleared
+ * list is rebuilt from the findings rather than believed, and nothing that fails is
+ * written down. A reading stored here is one this codebase could have produced.
+ */
+export async function keepDocument(
+  document: ReadDocument,
+  analysis: AnalysisResult | null,
+  _previous: KeepState,
+  _form: FormData
+): Promise<KeepState> {
+  const name = document.name.trim();
 
-  if (name === "" || !isDocumentFormat(format)) {
+  if (name === "" || !isDocumentFormat(document.format)) {
     return { status: "refused", message: "Something went astray on the way over. Read the document again." };
   }
 
   const reread = readExtractedText({
     name,
-    format,
-    rawText: text,
+    format: document.format,
+    rawText: document.text,
     whenEmpty: "no-text-layer",
   });
 
@@ -312,7 +338,25 @@ export async function keepDocument(_previous: KeepState, form: FormData): Promis
     };
   }
 
-  const saved = await saveDocument(reread, jurisdictionFrom(form));
+  const checked =
+    analysis === null
+      ? null
+      : readBackReading(recordReading(analysis), reread.text, analysis.jurisdiction);
+
+  if (checked !== null && checked.outcome === "unreadable") {
+    console.error("the reading posted to be kept did not hold up:", checked.problem);
+    return {
+      status: "refused",
+      message:
+        "The reading on this page and the wording under it do not line up, so nothing " +
+        "was saved. Read the document again and keep that one.",
+    };
+  }
+
+  const kept = checked === null ? null : recordReading(checked.result);
+  const jurisdiction = checked === null ? UNDETERMINED_JURISDICTION : checked.result.jurisdiction;
+
+  const saved = await saveDocument(reread, jurisdictionRecordOf(jurisdiction), kept);
 
   switch (saved.outcome) {
     case "saved":
@@ -339,15 +383,30 @@ export async function keepDocument(_previous: KeepState, form: FormData): Promis
  * the Signer's own choice are stored separately, because they are two different claims —
  * the database enforces that a detection without its sentence cannot be written at all.
  */
-function jurisdictionFrom(form: FormData): JurisdictionRecord {
-  const name = String(form.get("detectedJurisdiction") ?? "").trim();
-  const sentence = String(form.get("detectedJurisdictionSentence") ?? "").trim();
-  const chosen = String(form.get("chosenJurisdiction") ?? "").trim();
-
-  return {
-    detected: name !== "" && sentence !== "" ? { jurisdiction: name, sourceSentence: sentence } : null,
-    chosenBySigner: chosen === "" ? null : chosen,
-  };
+function jurisdictionRecordOf(jurisdiction: Jurisdiction): JurisdictionRecord {
+  switch (jurisdiction.source) {
+    case "undetermined":
+      return { detected: null, chosenBySigner: null };
+    case "document":
+      return {
+        detected: {
+          jurisdiction: jurisdiction.name,
+          sourceSentence: jurisdiction.sourceSentence,
+        },
+        chosenBySigner: null,
+      };
+    case "signer":
+      return {
+        detected:
+          jurisdiction.detected === null
+            ? null
+            : {
+                jurisdiction: jurisdiction.detected.name,
+                sourceSentence: jurisdiction.detected.sourceSentence,
+              },
+        chosenBySigner: jurisdiction.name,
+      };
+  }
 }
 
 function isDocumentFormat(value: string): value is DocumentFormat {

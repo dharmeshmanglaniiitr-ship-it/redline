@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 
-import type { Jurisdiction } from "@/lib/analysis/result";
+import type { AnalysisResult } from "@/lib/analysis/result";
 import type { ExtractedDocument } from "@/lib/supabase/documents";
 
 import { LABEL, ProofMark, STAMP } from "../_components/galley";
@@ -22,30 +22,35 @@ import { UNTOUCHED } from "./keep-state";
  * Signed out, it says what an account would add and gets out of the way. Nothing about
  * the reading is behind the account, and the Signer is not asked to sign in to finish
  * what they were doing.
+ *
+ * What goes over is the wording and the reading that was made of it, because a saved
+ * document shows what Redline said rather than being read again on the way back
+ * (`docs/adr/0010`). Both travel as arguments to the action rather than as hidden fields,
+ * so the reading cannot arrive in pieces — and the server checks it against the wording
+ * anyway before any of it is written down.
  */
 export function KeepInLibrary({
   document,
-  jurisdiction,
+  analysis,
 }: {
   document: ExtractedDocument;
   /**
-   * What the analysis assumed about governing law, kept with the text so a Signer coming
-   * back in six months can tell what they were told (`docs/adr/0007`). Null while there
-   * is no analysis to have assumed anything.
+   * The reading on the screen, kept with the text so a Signer coming back in six months
+   * sees what they were told (`docs/adr/0010`) and under which law (`docs/adr/0007`).
+   * Null while there is no reading — the model is not set up here, or it did not come
+   * back — and the wording is kept on its own, which the library says out loud.
    */
-  jurisdiction: Jurisdiction | null;
+  analysis: AnalysisResult | null;
 }) {
   const signer = useSignerState();
-  const [state, keep, working] = useActionState(keepDocument, UNTOUCHED);
-  const detected =
-    jurisdiction === null
-      ? null
-      : jurisdiction.source === "document"
-        ? { name: jurisdiction.name, sourceSentence: jurisdiction.sourceSentence }
-        : jurisdiction.source === "signer"
-          ? jurisdiction.detected
-          : null;
-  const chosen = jurisdiction?.source === "signer" ? jurisdiction.name : "";
+  const [state, keep, working] = useActionState(
+    keepDocument.bind(
+      null,
+      { name: document.name, format: document.format, text: document.text },
+      analysis
+    ),
+    UNTOUCHED
+  );
 
   const aside =
     "mt-3 max-w-[58ch] text-[0.94rem] leading-[1.55] text-ink-soft";
@@ -97,24 +102,30 @@ export function KeepInLibrary({
           <ProofMark kind="caret" className="mt-0.5 h-5 w-5" />
           <span>
             {state.name} is in your library now, under {signer.signer.email}. Only this
-            account can open it.
+            account can open it
+            {analysis === null
+              ? ", and it holds the wording on its own, because there was no reading to keep with it"
+              : ", and it opens on the marks you are reading here"}
+            .{" "}
+            <Link
+              href="/library"
+              className="font-semibold text-ink underline decoration-mark decoration-2 underline-offset-4 transition-colors duration-200 hover:text-mark-deep focus-visible:text-mark-deep"
+            >
+              Go to your library
+            </Link>
+            .
           </span>
         </p>
       ) : (
         <form action={keep}>
-          <input type="hidden" name="name" value={document.name} />
-          <input type="hidden" name="format" value={document.format} />
-          <input type="hidden" name="text" value={document.text} />
-          <input type="hidden" name="detectedJurisdiction" value={detected?.name ?? ""} />
-          <input
-            type="hidden"
-            name="detectedJurisdictionSentence"
-            value={detected?.sourceSentence ?? ""}
-          />
-          <input type="hidden" name="chosenJurisdiction" value={chosen} />
           <p className={aside}>
-            Kept against {signer.signer.email}. The text goes to the library. The file
-            does not, because it never left your machine.
+            Kept against {signer.signer.email}.{" "}
+            {analysis === null
+              ? "The wording goes to the library on its own. There is no reading to keep " +
+                "with it, so this one comes back as the text you read here."
+              : "The wording goes to the library, and so do the marks on it, so opening " +
+                "it again later shows what Redline said, without reading it a second time."}{" "}
+            The file does not go, because it never left your machine.
           </p>
           <button type="submit" className={`${STAMP} mt-5`} disabled={working}>
             {working ? "Keeping" : "Keep this document"}

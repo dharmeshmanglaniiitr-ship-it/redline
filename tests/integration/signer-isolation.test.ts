@@ -81,6 +81,38 @@ function redLineOf(owner: string): string {
   return `${owner} will not assign rights in anything made before this engagement began.`;
 }
 
+/**
+ * What Redline said about one Signer's contract, as the library stores it
+ * (`docs/adr/0010`). The sentence it cites is a sentence of that Signer's own document, so
+ * a leak here hands over the finding *and* the wording it came from.
+ */
+function readingOf(owner: string): Record<string, unknown> {
+  return {
+    summary_sender: `The client who sent ${owner} this`,
+    summary_engagement: `Design work for ${owner}`,
+    summary_plain_english: `${owner} assigns all work product created under this Agreement.`,
+    flags: [
+      {
+        id: "ip-assignment-1",
+        clauseType: "ip-assignment",
+        sourceSentence:
+          "The Contractor assigns all work product created under this Agreement to the Client.",
+        severity: 2,
+        title: "Everything you make here belongs to them",
+        cost: `what ${owner} makes on this job stops being theirs`,
+        redLinesCrossed: [],
+        properties: { reachesBeyondDeliverable: false },
+        unstatedProperties: [],
+        hedged: false,
+        hedgeNote: null,
+        counterOffer: null,
+      },
+    ],
+    checked_clean: ["payment-approval", "non-compete"],
+    red_lines: [redLineOf(owner)],
+  };
+}
+
 function anonClient(): SupabaseClient {
   return createClient(process.env.SUPABASE_TEST_URL!, process.env.SUPABASE_TEST_ANON_KEY!, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -99,6 +131,7 @@ suite(
       readonly user: User;
       readonly client: SupabaseClient;
       readonly documentId: string;
+      readonly readingId: string;
       readonly redLineId: string;
     }
 
@@ -136,6 +169,15 @@ suite(
         throw new Error(`the ${label} Signer could not save a document: ${saved.error.message}`);
       }
 
+      const read = await client
+        .from("document_readings")
+        .insert({ document_id: saved.data.id as string, ...readingOf(label) })
+        .select("id")
+        .single();
+      if (read.error !== null) {
+        throw new Error(`the ${label} Signer could not save a reading: ${read.error.message}`);
+      }
+
       const recorded = await client
         .from("red_lines")
         .insert({ wording: redLineOf(label) })
@@ -149,6 +191,7 @@ suite(
         user: created.data.user,
         client,
         documentId: saved.data.id as string,
+        readingId: read.data.id as string,
         redLineId: recorded.data.id as string,
       };
     }
@@ -273,6 +316,200 @@ suite(
     it("shows nothing at all to a caller with no session", async () => {
       const strangerSees = await anonClient().from("documents").select("id");
       expect(strangerSees.data ?? []).toEqual([]);
+    });
+
+    /**
+     * Ticket 15's last criterion: what the library stores about a document carries the same
+     * isolation as the document.
+     *
+     * This is the half a reader might assume follows from the documents table and does not.
+     * A reading is a separate table with its own policies, and it holds the findings, the
+     * sentences they cite and the Signer's own red lines as they stood — so a leak here
+     * hands over the contract's wording as surely as a leak of `documents` would, by way of
+     * the citations. Every claim below is made through a Signer's own session; `admin` is
+     * used only to check from outside the policies that a write which appeared to do nothing
+     * really did nothing.
+     */
+    describe("what the library stored about a document", () => {
+      it("gives each Signer only their own reading when they ask for everything", async () => {
+        const seenBySecond = await second.client
+          .from("document_readings")
+          .select("id, summary_sender");
+        expect(seenBySecond.error).toBeNull();
+        expect(seenBySecond.data?.map((row) => row.id)).toEqual([second.readingId]);
+
+        const seenByFirst = await first.client.from("document_readings").select("id");
+        expect(seenByFirst.error).toBeNull();
+        expect(seenByFirst.data?.map((row) => row.id)).toEqual([first.readingId]);
+      });
+
+      it("returns nothing when a Signer names the other's reading by its id", async () => {
+        const byId = await second.client
+          .from("document_readings")
+          .select("id, flags")
+          .eq("id", first.readingId);
+
+        expect(byId.error).toBeNull();
+        expect(byId.data).toEqual([]);
+      });
+
+      it("returns nothing when a Signer asks for the reading of the other's document", async () => {
+        const byDocument = await second.client
+          .from("document_readings")
+          .select("id, flags")
+          .eq("document_id", first.documentId);
+
+        expect(byDocument.error).toBeNull();
+        expect(byDocument.data).toEqual([]);
+      });
+
+      it("returns nothing when a Signer filters by the other's account id", async () => {
+        const bySigner = await second.client
+          .from("document_readings")
+          .select("id")
+          .eq("signer_id", first.user.id);
+
+        expect(bySigner.error).toBeNull();
+        expect(bySigner.data).toEqual([]);
+      });
+
+      it("leaks no finding through a filter on what the reading says", async () => {
+        const bySummary = await second.client
+          .from("document_readings")
+          .select("id")
+          .ilike("summary_plain_english", "%first assigns all work product%");
+
+        expect(bySummary.error).toBeNull();
+        expect(bySummary.data).toEqual([]);
+      });
+
+      it("hands over only their own reading when the library reads both tables at once", async () => {
+        // The query the library actually makes (`lib/supabase/documents.ts`): documents with
+        // their readings embedded. Two policies have to hold at once for this to be safe,
+        // and an embedded resource is exactly where one of them is easy to forget.
+        const listed = await second.client
+          .from("documents")
+          .select("id, document_readings(id, summary_sender)");
+
+        expect(listed.error).toBeNull();
+        expect(listed.data?.map((row) => row.id)).toEqual([second.documentId]);
+        expect(JSON.stringify(listed.data)).not.toContain("first");
+      });
+
+      it("cannot save a reading against the other Signer's document", async () => {
+        // The insert policy checks that the document is one this session can see, so a
+        // guessed document id reaches nothing — and cannot occupy the row the real owner's
+        // own reading would go in.
+        const attempted = await second.client.from("document_readings").insert({
+          document_id: first.documentId,
+          ...readingOf("planted"),
+        });
+
+        expect(attempted.error).not.toBeNull();
+
+        const firstSees = await first.client.from("document_readings").select("id");
+        expect(firstSees.data?.map((row) => row.id)).toEqual([first.readingId]);
+      });
+
+      it("cannot rewrite the other Signer's reading", async () => {
+        const attempted = await second.client
+          .from("document_readings")
+          .update({ summary_plain_english: "second decides what first agreed to." })
+          .eq("id", first.readingId)
+          .select("id");
+
+        expect(attempted.data ?? []).toEqual([]);
+
+        const stillTheirs = await admin
+          .from("document_readings")
+          .select("summary_plain_english")
+          .eq("id", first.readingId)
+          .single();
+        expect(stillTheirs.data?.summary_plain_english).toBe(
+          readingOf("first").summary_plain_english
+        );
+      });
+
+      it("will not let a Signer rewrite their own reading either", async () => {
+        // `docs/adr/0010`: a saved reading is the record of what somebody was shown, and the
+        // trigger refuses every update to it, whoever makes it. Asserted through the owner's
+        // own session, because the policy would let this one through and the trigger is
+        // what stops it.
+        const attempted = await first.client
+          .from("document_readings")
+          .update({ summary_plain_english: "something else entirely." })
+          .eq("id", first.readingId)
+          .select("id");
+
+        expect(attempted.error).not.toBeNull();
+
+        const unchanged = await admin
+          .from("document_readings")
+          .select("summary_plain_english")
+          .eq("id", first.readingId)
+          .single();
+        expect(unchanged.data?.summary_plain_english).toBe(
+          readingOf("first").summary_plain_english
+        );
+      });
+
+      it("cannot delete the other Signer's reading", async () => {
+        const attempted = await second.client
+          .from("document_readings")
+          .delete()
+          .eq("id", first.readingId)
+          .select("id");
+
+        expect(attempted.data ?? []).toEqual([]);
+
+        const survived = await admin
+          .from("document_readings")
+          .select("id")
+          .eq("id", first.readingId);
+        expect(survived.data?.map((row) => row.id)).toEqual([first.readingId]);
+      });
+
+      it("refuses a finding with no sentence to point at, whoever writes the row", async () => {
+        // `docs/adr/0001` as a constraint rather than as a convention: this is the owner's
+        // own document and their own session, and the database still will not take it.
+        const saved = await second.client.from("documents").insert({
+          name: "second-unsourced.txt",
+          format: "text",
+          extracted_text: contractText("second"),
+          sentences: contractText("second").split(". ").map((part) => `${part}.`),
+        }).select("id").single();
+        expect(saved.error).toBeNull();
+
+        const attempted = await second.client.from("document_readings").insert({
+          document_id: saved.data?.id as string,
+          ...readingOf("second"),
+          flags: [{ id: "ip-assignment-1", clauseType: "ip-assignment", severity: 2 }],
+        });
+
+        expect(attempted.error).not.toBeNull();
+
+        await second.client.from("documents").delete().eq("id", saved.data?.id as string);
+      });
+
+      it("shows nothing at all to a caller with no session", async () => {
+        const strangerSees = await anonClient().from("document_readings").select("id");
+        expect(strangerSees.data ?? []).toEqual([]);
+      });
+
+      it("goes when the document goes", async () => {
+        // The cascade the migration declares, checked rather than assumed: a Signer who
+        // deletes a contract does not leave what Redline said about it behind.
+        const leaving = await createSigner("leaving-reading");
+        await leaving.client.from("documents").delete().eq("id", leaving.documentId);
+
+        const gone = await admin
+          .from("document_readings")
+          .select("id")
+          .eq("id", leaving.readingId);
+        expect(gone.data ?? []).toEqual([]);
+
+        await admin.auth.admin.deleteUser(leaving.user.id);
+      }, 60_000);
     });
 
     /**

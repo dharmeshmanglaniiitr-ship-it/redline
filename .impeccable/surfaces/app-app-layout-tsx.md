@@ -43,12 +43,13 @@ invented for it:
   in the margin and answered there. An unanswerable question returns as a query marked
   unresolved, not as a blank.
 - **The library is a stack of marked proofs**, each carrying the date it was marked and
-  what standard it was marked against.
+  what standard it was marked against. A kept proof opens on the marks it was filed with;
+  asking for it to be read again produces a second proof, dated today, that does not
+  replace the one on file (`docs/adr/0010`).
 - **The clean verdict is the collation mark.** A proof signed off names what was
   checked. Nothing here invents a green tick.
 
-**Unresolved.** Whether a returning Signer sees the stored analysis or a fresh re-run
-(`docs/spec-v1.md`). How jurisdiction is asked for or detected (ticket 03). How
+**Unresolved.** How jurisdiction is asked for or detected (ticket 03). How
 deliberate over-flagging is set up so a Signer does not read false positives as
 inaccuracy. Whether bringing a document in is paste, file, or both as equals.
 
