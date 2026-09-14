@@ -20,36 +20,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { ClauseType } from "@/lib/analysis/clauses";
 import type { CounterOffer, RiskFlag } from "@/lib/analysis/result";
 import { severityWord } from "@/lib/analysis/wording";
 import { clauseReferenceIn, markUpDocument } from "@/lib/text/marking";
 
-import { LABEL, ProofMark, SeverityMeter, type MarkKind } from "../_components/galley";
+import { LABEL, ProofMark, SeverityMeter, markFor } from "../_components/galley";
 import { CROSSED_HEADING, crossedLegend } from "./red-lines";
-
-/**
- * Which proof mark each kind of finding carries.
- *
- * A strike is a deletion, for the clauses a Signer most often needs struck out rather
- * than narrowed: payment left to the client's satisfaction, and a power to rewrite the
- * terms after signing. A caret is an insertion, for the clauses that are fixed by
- * putting a bound into them — where the assignment stops, how far the restriction
- * reaches, what sets an indemnity off, what the ceiling on liability is. A query is the
- * mark for something to take up, which is what an early exit with nothing payable and a
- * term that renews itself both are. The same glyph appears on both halves of the pair;
- * that is what makes them one mark.
- */
-const MARK_OF: Record<ClauseType, MarkKind> = {
-  "payment-approval": "strike",
-  "ip-assignment": "caret",
-  "non-compete": "caret",
-  "termination-for-convenience": "query",
-  "one-sided-indemnity": "caret",
-  "uncapped-liability": "caret",
-  "auto-renewal": "query",
-  "unilateral-change": "strike",
-};
 
 interface Leader {
   readonly points: string;
@@ -249,7 +225,7 @@ export function MarkedGalley({
                   if (marked === undefined) {
                     return <span key={spanIndex}>{span.text}</span>;
                   }
-                  const kind = MARK_OF[marked.clauseType];
+                  const kind = markFor(marked.clauseType);
                   const chosen = marked.id === selected;
                   return (
                     <span key={spanIndex}>
@@ -336,7 +312,7 @@ function MarginMark({
         className="w-full cursor-pointer text-left transition-colors duration-200 hover:bg-stock-shade"
       >
         <span className="flex items-start gap-3 text-mark">
-          <ProofMark kind={MARK_OF[flag.clauseType]} />
+          <ProofMark kind={markFor(flag.clauseType)} />
           <span className="flex-1">
             <span className="block text-[1rem] font-semibold leading-snug text-ink">
               {flag.title}

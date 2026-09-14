@@ -5,3 +5,7 @@
 tests/fixtures/*.txt text eol=lf
 tests/fixtures/*.json text eol=lf
 tests/fixtures/*.pdf -text
+
+# The generated landing-page sample is compared with the generator's output character
+# for character in tests/landing-sample.test.ts, so line-ending translation would break it.
+lib/landing/sample-analysis.ts text eol=lf

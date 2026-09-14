@@ -9,7 +9,42 @@
 
 import type { ReactNode } from "react";
 
+import type { ClauseType } from "@/lib/analysis/clauses";
+
 export type MarkKind = "caret" | "strike" | "query" | "check";
+
+/**
+ * Which proof mark each kind of finding carries.
+ *
+ * A strike is a deletion, for the clauses a Signer most often needs struck out rather
+ * than narrowed: payment left to the client's satisfaction, and a power to rewrite the
+ * terms after signing. A caret is an insertion, for the clauses that are fixed by putting
+ * a bound into them — where the assignment stops, how far the restriction reaches, what
+ * sets an indemnity off, what the ceiling on liability is. A query is the mark for
+ * something to take up, which is what an early exit with nothing payable and a term that
+ * renews itself both are. The same glyph appears on both halves of the pair; that is what
+ * makes them one mark.
+ *
+ * It sits here rather than on the review screen because the landing page marks up the same
+ * findings with the same glyphs (`app/page.tsx`), and a clause type that read as a strike
+ * on one surface and a caret on the other would be two different notations wearing one
+ * name.
+ */
+const MARK_OF: Record<ClauseType, MarkKind> = {
+  "payment-approval": "strike",
+  "ip-assignment": "caret",
+  "non-compete": "caret",
+  "termination-for-convenience": "query",
+  "one-sided-indemnity": "caret",
+  "uncapped-liability": "caret",
+  "auto-renewal": "query",
+  "unilateral-change": "strike",
+};
+
+/** The glyph this clause type is marked with, in the line and in the margin alike. */
+export function markFor(clauseType: ClauseType): MarkKind {
+  return MARK_OF[clauseType];
+}
 
 /**
  * A proof mark, drawn rather than set in a font. One 2px stroke, round caps, current

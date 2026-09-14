@@ -16,7 +16,21 @@ the kind of proof `PRODUCT.md` says does not exist.
 
 **Blocked by:** 08, 17
 
-**Status:** ready-for-agent
+**Status:** done — 2026-09-14. The page reads `lib/landing/sample-analysis.ts`, generated
+by `scripts/landing-sample.ts` from the real `analyze()` seam over
+`tests/fixtures/adhesion-contract.txt`, and writes no findings of its own. `/` is still
+statically prerendered and calls no model. `tests/landing-sample.test.ts` rebuilds the
+sample and fails if the committed file drifts from what the analysis produces today, so
+the artifact cannot go stale unnoticed.
+
+The committed artifact is stub-derived, because the drift test has to reproduce it offline
+with no key, and the page says so in as many words. `producedBy` is a single-arm union, so
+regenerating from a live model would need a second arm and new copy rather than a quiet
+swap.
+
+All three defects recorded below dissolved, and each was checked rather than assumed — see
+the commit message for what happened to the second one, which did not dissolve the way the
+write-up guessed.
 
 **Three positioning defects ticket 16 found in `app/page.tsx` and deliberately did not
 fix, because this is the ticket that touches that page.** All three are the subtler
@@ -38,13 +52,13 @@ analysis does not make any of these mistakes — but check each one rather than 
    under the line "Redline names every clause it examined". It describes a checklist
    Redline does not have.
 
-- [ ] The flag shown on the landing page was produced by the real analysis
-- [ ] Its source sentence appears verbatim in the document it came from, held to the same
+- [x] The flag shown on the landing page was produced by the real analysis
+- [x] Its source sentence appears verbatim in the document it came from, held to the same
       exact-match standard as the product itself
-- [ ] The document behind the demonstration is identified as a sample, never presented or
+- [x] The document behind the demonstration is identified as a sample, never presented or
       implied to be a real client's contract
-- [ ] The illustration labelling from ticket 17 is removed, not left contradicting real
+- [x] The illustration labelling from ticket 17 is removed, not left contradicting real
       output
-- [ ] The demonstration stays legible and followable by keyboard and screen reader
-- [ ] A stale demonstration is a defect: if the analysis output shape changes, this is
+- [x] The demonstration stays legible and followable by keyboard and screen reader
+- [x] A stale demonstration is a defect: if the analysis output shape changes, this is
       regenerated rather than left as a picture of an older product
