@@ -21,16 +21,33 @@ making a claim it cannot show the Signer the basis for.
 
 **Blocked by:** 08, 11, 12
 
-**Status:** ready-for-agent
+**Status:** done — 2026-09-14, with one residual recorded below. Every surface named in
+the ticket was read, including all eighteen drafted counter-offers at both ends of every
+threshold. Nothing recommends or discourages signing. Three defects were found and two
+fixed; the third is on `app/page.tsx` and is written up in ticket 18, which owns that file.
 
-- [ ] Flag explanations describe what a clause would cost, without recommending for or
+The constraint is now enforceable rather than currently-true: `tests/positioning.test.ts`
+drives the real analysis over the whole corpus and renders the real screens, and its
+assertions were checked against injected regressions rather than assumed to bite. Advice
+is matched as verb-plus-object so drafted contract language keeps the word "should", and
+the jurisdiction rule is asserted as attribution rather than absence, because a bare word
+ban would have outlawed the feature ADR 0005 requires.
+
+- [x] Flag explanations describe what a clause would cost, without recommending for or
       against signing
-- [ ] Counter-offers draft language to send without advising whether to accept the
+- [x] Counter-offers draft language to send without advising whether to accept the
       contract
-- [ ] Q&A answers stay inside the document and refuse rather than reaching for general
+- [x] Q&A answers stay inside the document and refuse rather than reaching for general
       legal knowledge
-- [ ] Nothing in the product positions Redline as a substitute for a lawyer
-- [ ] What Redline does and does not do is stated plainly where a Signer will see it,
+- [x] Nothing in the product positions Redline as a substitute for a lawyer
+- [x] What Redline does and does not do is stated plainly where a Signer will see it,
       not buried
-- [ ] Every claim shown to a Signer traces to something they can check — a cited
+- [x] Every claim shown to a Signer traces to something they can check — a cited
       sentence, a named checklist entry, or a stated jurisdiction
+
+**Residual, recorded rather than fixed.** `summary.plainEnglish` is model prose with no
+seam enforcement — its only guard is the prompt rule telling the model not to judge the
+contract or advise whether to sign. It was not given the Q&A seam's check because the
+three analysis calls run under `Promise.all`, so refusing a summary would take the flags
+and the checklist down with it. It is the one Signer-facing surface that is neither
+sentence-cited nor seam-checked, and it was so before this ticket.
