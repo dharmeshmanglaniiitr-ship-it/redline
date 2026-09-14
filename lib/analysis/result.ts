@@ -17,14 +17,13 @@
  * - **Jurisdiction is never silently defaulted** (`docs/adr/0007`). Undetermined is one
  *   arm of a union, not an empty string, and a detection carries the sentence it came
  *   from or it is not a detection.
+ * - **A flagged clause cannot also be reported clean** (`docs/adr/0004`). `checkedClean`
+ *   is a `ClearedChecklist`, and the only way to obtain one is `clearedList`, which
+ *   reads the flags (`lib/analysis/checklist.ts`).
  */
 
-import type {
-  ChecklistEntry,
-  ClauseType,
-  PropertyValue,
-  SeverityProperty,
-} from "./clauses";
+import type { ClearedChecklist } from "./checklist";
+import type { ClauseType, PropertyValue, SeverityProperty } from "./clauses";
 
 /**
  * Severity is an integer 1-4, because `DESIGN.md`'s meter is four cells and announces
@@ -133,18 +132,23 @@ export type RiskFlag = { [T in ClauseType]: FlagOfClause<T> }[ClauseType];
 /**
  * Everything the analysis found in one document.
  *
- * `flags` and `checkedClean` are populated by tickets 08 and 09 and counter-offers by
- * ticket 11. Until then they are empty, which is the analysis reporting what it has —
- * not a stub, and not a clean bill either: the screen says which of them Redline has
- * actually looked for, because a quiet result that reads like a passed contract is the
- * most dangerous thing this product could show (`docs/spec-v1.md`).
+ * `flags` and `checkedClean` are populated by tickets 08 and 09; counter-offers arrive
+ * with ticket 11 and are null until then. An empty list anywhere here is the analysis
+ * reporting what it has — not a stub, and not a clean bill either: the screen says which
+ * of them Redline has actually looked for, because a quiet result that reads like a
+ * passed contract is the most dangerous thing this product could show
+ * (`docs/spec-v1.md`).
+ *
+ * The two lists are read together. Flags say what would cost the Signer; the cleared
+ * list says what was examined and came back with nothing, so a short flag list means
+ * "we looked" rather than "we found nothing" (`docs/adr/0004`).
  */
 export interface AnalysisResult {
   readonly summary: DocumentSummary;
   /** Worst first, so ten minutes spent at the top is spent well (user story 6). */
   readonly flags: readonly RiskFlag[];
   /** Checklist entries examined with nothing to report — data, not prose. */
-  readonly checkedClean: readonly ChecklistEntry[];
+  readonly checkedClean: ClearedChecklist;
   /** What the analysis assumed about governing law, recorded so it can be corrected. */
   readonly jurisdiction: Jurisdiction;
   /** The standard this document was marked against, kept with the marks it produced. */

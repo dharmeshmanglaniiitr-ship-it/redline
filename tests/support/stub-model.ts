@@ -15,7 +15,7 @@
  */
 
 import type { JsonObject, JsonValue, ModelGateway, ModelRequest } from "@/lib/model/types";
-import type { Fixture, PlantedClause } from "./fixtures";
+import { CHECKLIST_ENTRIES, type Fixture, type PlantedClause } from "./fixtures";
 
 /** What the stub would say a flagged clause costs, by clause type. */
 const COST_OF: Record<string, string> = {
@@ -59,6 +59,16 @@ function buildPayload(fixture: Fixture, prompt: string): JsonObject {
       plainEnglish: `${sidecar.sender} sent you this one. It covers ${lowerFirst(sidecar.engagement)}`,
     },
     findings,
+    // The checklist, twice over, because two callers ask for it in two shapes and both
+    // are built from the one field the sidecar records, so they cannot disagree.
+    // `checklist` is the verdict-per-entry shape `analyze()`'s examination asks for:
+    // every entry answered, cleared or not, so a seam can tell an entry that came back
+    // with nothing from an entry nothing looked at. `checkedClean` is the flat list, and
+    // it is what the gateway-contract test in `tests/stub-model.test.ts` reads.
+    checklist: CHECKLIST_ENTRIES.map((entry) => ({
+      entry,
+      cleared: sidecar.expectedCleanChecklist.includes(entry),
+    })),
     checkedClean: [...sidecar.expectedCleanChecklist],
     answer: answerFrom(fixture, prompt),
   };

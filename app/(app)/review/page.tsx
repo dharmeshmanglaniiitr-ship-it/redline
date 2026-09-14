@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { CHECKLIST_ENTRIES } from "@/lib/analysis/clauses";
 import { readPastedText } from "@/lib/document/extract";
 import type { ExtractionResult, UnreadableReason } from "@/lib/document/extraction";
 import type { ExtractedDocument } from "@/lib/supabase/documents";
@@ -9,6 +10,7 @@ import type { ExtractedDocument } from "@/lib/supabase/documents";
 import { GalleyFoot, LABEL, Masthead, ProofMark, STAMP } from "../_components/galley";
 import { explainDocument } from "./actions";
 import { NOT_ASKED, type AnalysisState } from "./analysis-state";
+import { ClearedList } from "./cleared-list";
 import { KeepInLibrary } from "./keep-in-library";
 import { MarkedGalley } from "./marked-galley";
 import { readFileInBrowser } from "./read-in-browser";
@@ -294,12 +296,11 @@ export default function ReviewPage() {
               <div className="mt-9 flex max-w-[58ch] items-start gap-3 border-t border-rule pt-5">
                 <ProofMark kind="query" className="mt-0.5 h-5 w-5 text-mark" />
                 <p className="text-[0.94rem] leading-[1.55] text-ink-soft">
-                  What is above says what the contract contains. The terms that would cost
-                  you are marked further down. Redline has not been through the rest of its
-                  checklist yet, so a clause it says nothing about is one it has not
-                  reached, and there is no drafted reply for you to send.
+                  What is above says what the contract contains. Next is the checklist
+                  Redline went through, then the terms that would cost you, marked in the
+                  wording itself. There is no drafted reply for you to send yet.
                   {analysis.result.jurisdiction.source === "undetermined" &&
-                    " It has also not worked out which law governs this agreement."}
+                    " Redline has also not worked out which law governs this agreement."}
                 </p>
               </div>
             </>
@@ -335,6 +336,14 @@ export default function ReviewPage() {
         </section>
       )}
 
+      {/* The other half of the report, and the half that only means anything because
+          there is a real checklist under it (`docs/adr/0004`). It stands between the
+          summary and the marked wording, so a Signer meets what was looked at before
+          they meet what was found. */}
+      {analysis.status === "explained" && (
+        <ClearedList cleared={analysis.result.checkedClean} />
+      )}
+
       {extracted && (
         <section aria-labelledby="the-text" className="mt-12">
           <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-3 border-t border-rule pt-6">
@@ -357,19 +366,16 @@ export default function ReviewPage() {
             </div>
           </div>
 
-          {/* Nothing found is a real answer and it is said in full, because "no marks"
-              on its own would read as a contract that passed — and Redline has only
-              weighed four kinds of clause so far (`docs/spec-v1.md`). */}
+          {/* Nothing found is a real answer, and it is only worth anything said beside
+              the list of what was looked at — "no marks" on its own reads as a contract
+              that passed (`docs/spec-v1.md`), which is why this points back up at the
+              checklist rather than standing on its own. */}
           {analysis.status === "explained" && flags.length === 0 && (
             <div className="mt-7 flex max-w-[58ch] items-start gap-3">
               <ProofMark kind="query" className="mt-0.5 h-5 w-5 text-mark" />
               <p className="text-[0.98rem] leading-[1.55] text-ink-soft">
-                Redline weighed four things here: what your work has to meet before it
-                counts as accepted, how far the ownership clause reaches, what a
-                restriction after the job covers, and what you are owed if the client
-                ends it early. None of them came out badly in this document. That is four
-                questions answered. The rest of the checklist is still being built, so a
-                contract with no marks on it is one Redline has only partly read.
+                Nothing in this wording is marked. The list above is what Redline checked
+                to get to that answer, so read the two together.
               </p>
             </div>
           )}
@@ -481,7 +487,10 @@ function liveStatus(screen: Screen, analysis: AnalysisState): string {
           : marks === 1
             ? "One term is marked below."
             : `${marks} terms are marked below, worst first.`;
-      return `${read} A summary of what it commits you to is below. ${marked}`;
+      // The clean half is announced too. A reader who cannot see the list would
+      // otherwise hear "nothing is marked" and have no way to tell that from silence.
+      const clean = `${analysis.result.checkedClean.length} of ${CHECKLIST_ENTRIES.length} checks came back clean.`;
+      return `${read} A summary of what it commits you to is below. ${marked} ${clean}`;
     }
     case "model-not-set-up":
       return `${read} Redline cannot explain it on this deployment.`;

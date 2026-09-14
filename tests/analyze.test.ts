@@ -27,7 +27,12 @@ import {
 import type { JsonObject, ModelGateway } from "@/lib/model/types";
 import { ModelResponseError } from "@/lib/model/types";
 
-import { fixtureNames, loadFixture, type PlantedClause } from "./support/fixtures";
+import {
+  CHECKLIST_ENTRIES,
+  fixtureNames,
+  loadFixture,
+  type PlantedClause,
+} from "./support/fixtures";
 import { createStubModelGateway } from "./support/stub-model";
 import {
   expectHedgeMatchesProvenance,
@@ -115,16 +120,17 @@ describe("analyze", () => {
     ).rejects.toBeInstanceOf(ModelResponseError);
   });
 
-  it("reports nothing checked as nothing checked, never as a contract with nothing wrong in it", async () => {
-    // Ticket 08 filled `flags`, so the adhesion contract's four planted clauses now come
-    // back marked (`tests/risk-flags.test.ts` is where that is tested). The checklist is
-    // ticket 09's, and until it exists nothing is reported clean — an empty list here
-    // means "not looked at", and the screen says so rather than letting a quiet result
-    // read as a contract that passed.
-    const { result } = await analyzeFixture("adhesion-contract.txt");
+  it("returns both halves of the report, never a quiet result that reads as a pass", async () => {
+    // Ticket 08 filled `flags` and ticket 09 the checklist, so the two halves now arrive
+    // together: the adhesion contract's four planted clauses come back marked, and the
+    // entries the examination cleared come back named. Neither list alone is a report —
+    // marks with no checklist is a contract nobody finished reading, and a checklist with
+    // no marks is the failure `docs/spec-v1.md` cares most about.
+    // `tests/checked-clean.test.ts` is where the clean bill itself is tested.
+    const { fixture, result } = await analyzeFixture("adhesion-contract.txt");
 
     expect(result.flags.length).toBeGreaterThan(0);
-    expect(result.checkedClean).toEqual([]);
+    expect([...result.checkedClean]).toEqual([...fixture.sidecar.expectedCleanChecklist]);
   });
 
   it("records the jurisdiction it assumed rather than defaulting to one", async () => {
@@ -201,11 +207,19 @@ describe("analyze", () => {
  * A gateway with one answer in it, for the cases where the answer itself is what the
  * seam has to refuse. It runs the caller's own `parse`, exactly as a real client does,
  * so what is under test is the seam's narrowing rather than anything written here.
+ *
+ * The two readings a test is not interested in are given answers that pass their own
+ * narrowing, so a rejection is the seam refusing the bad answer that was supplied rather
+ * than tripping over a second one.
  */
 function gatewayAnswering(payload: JsonObject): ModelGateway {
+  const sound: JsonObject = {
+    findings: [],
+    checklist: CHECKLIST_ENTRIES.map((entry) => ({ entry, cleared: true })),
+  };
   return {
     async complete(request) {
-      return request.response.parse(payload);
+      return request.response.parse({ ...sound, ...payload });
     },
   };
 }

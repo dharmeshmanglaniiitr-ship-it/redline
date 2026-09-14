@@ -18,13 +18,32 @@ not having looked at all. Both halves have to hold.
 
 **Blocked by:** 08
 
-**Status:** ready-for-agent
+**Status:** implemented, uncommitted. `analyze()` makes a third gateway call, a checklist
+examination covering all eight entries, and `checkedClean` is derived from it and the
+flags together by `lib/analysis/checklist.ts`. The review screen renders the cleared list
+per `DESIGN.md`. `npx tsc --noEmit`, `npm test` (157 passing, the Supabase isolation test
+still skipped for want of a database) and `npm run build` are green. The live model is
+still unreachable, so none of this has been run against a real model.
 
-- [ ] A defined clause checklist for freelance contracts exists as data
-- [ ] The analysis reports which checklist entries it examined and found clean
-- [ ] The balanced-contract fixture yields zero high-severity flags *and* a populated
-      checked-clean list
-- [ ] Entries are named specifically enough that a Signer knows what was checked
-- [ ] No low-severity finding is manufactured on a clean document
-- [ ] The four clause types with settled thresholds are covered; the remaining four are
+- [x] A defined clause checklist for freelance contracts exists as data
+      (`CHECKLIST_ENTRIES`, built in ticket 08, now consumed rather than duplicated)
+- [x] The analysis reports which checklist entries it examined and found clean
+- [x] The balanced-contract fixture yields zero high-severity flags *and* a populated
+      checked-clean list — both halves asserted in one test
+      (`tests/checked-clean.test.ts`)
+- [x] Entries are named specifically enough that a Signer knows what was checked
+      (`checklistEntryName`, run through the humanizer; a test refuses the kebab-case
+      identifiers on the screen)
+- [x] No low-severity finding is manufactured on a clean document
+- [x] The four clause types with settled thresholds are covered; the remaining four are
       carried as checklist members whose thresholds ticket 10 settles
+
+**The honest limit on four of the eight entries, for ticket 10.** One-sided indemnity,
+uncapped liability, auto-renewal and unilateral change are examined by the checklist pass
+and can be reported clean, which `PRD.md` §5 requires or the clean bill is not a real
+claim. What they cannot get is the second check the settled four get: a flag against the
+entry overturns a clean claim in code, and with no severity rule there is no flag to
+overturn it with. So on those four a clean line means "read, nothing to raise" and a
+clause that *is* found lands in neither list — it is not flagged and not cleared, and the
+screen makes no claim about it. Ticket 10 closes that by giving them thresholds, at which
+point `clearedList` subtracts their flags with no change needed.

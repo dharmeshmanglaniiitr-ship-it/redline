@@ -1,5 +1,5 @@
 /**
- * Every word a Signer reads on a flag.
+ * Every word a Signer reads on a flag, and the name of every entry on the checklist.
  *
  * The model reads properties out of a contract; it does not write the finding. The
  * title, the explanation of what the clause would cost, the severity word and the hedge
@@ -18,7 +18,7 @@
  * missing the sentence that depends on it is left out, and the hedge says so.
  */
 
-import type { ClauseType } from "./clauses";
+import type { ChecklistEntry, ClauseType } from "./clauses";
 import type { Jurisdiction, Severity } from "./result";
 import type { ClauseReading } from "./severity";
 
@@ -33,6 +33,34 @@ const SEVERITY_WORDS: Record<Severity, string> = {
 /** What to call this step of the meter. One of severity's three channels. */
 export function severityWord(severity: Severity): string {
   return SEVERITY_WORDS[severity];
+}
+
+/**
+ * What each checklist entry is called in front of a Signer.
+ *
+ * `docs/adr/0004` asks for a clean bill specific enough to be worth something, and
+ * "ip-assignment" is an identifier, not a name — a reader cannot tell from it what was
+ * checked, which is the whole job of the list. Each line is written as the question the
+ * entry answers about their own contract, so a Signer reading down the cleared list
+ * knows what Redline went looking for.
+ *
+ * Keyed on the checklist rather than on the four clause types with settled thresholds,
+ * so an entry added without a name will not compile.
+ */
+const CHECKLIST_NAMES: Record<ChecklistEntry, string> = {
+  "payment-approval": "What your work has to meet before you are paid",
+  "ip-assignment": "What the client ends up owning",
+  "non-compete": "What you can take on after this ends",
+  "termination-for-convenience": "What you are owed if they end it early",
+  "one-sided-indemnity": "Who covers it when someone else brings a claim",
+  "uncapped-liability": "Whether there is a ceiling on what you could be made to pay",
+  "auto-renewal": "Whether it renews itself",
+  "unilateral-change": "Whether they can change the terms on their own",
+};
+
+/** The name a cleared checklist entry is read under (`DESIGN.md`, Cleared list). */
+export function checklistEntryName(entry: ChecklistEntry): string {
+  return CHECKLIST_NAMES[entry];
 }
 
 /**

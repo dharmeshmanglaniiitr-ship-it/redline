@@ -7,11 +7,16 @@
  * working views behind sign-in do not each grow their own version.
  */
 
-export type MarkKind = "caret" | "strike" | "query";
+export type MarkKind = "caret" | "strike" | "query" | "check";
 
 /**
  * A proof mark, drawn rather than set in a font. One 2px stroke, round caps, current
  * colour, hidden from screen readers because the text beside it already says it.
+ *
+ * Three of them are corrections and are drawn in vermilion. The check is not: it is the
+ * blue pencil's only glyph, for a checklist entry that came back with nothing
+ * (`DESIGN.md`, The One Correcting Hand Rule). The two hands never borrow each other's
+ * job, so a check in vermilion or a caret in blue pencil is a bug.
  */
 export function ProofMark({
   kind,
@@ -44,6 +49,7 @@ export function ProofMark({
           <path d="M12 18.4h.01" />
         </>
       )}
+      {kind === "check" && <path d="M4 12.8 9.4 18.2 20 5.8" />}
     </svg>
   );
 }

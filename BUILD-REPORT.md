@@ -67,8 +67,8 @@ Filled in as tickets complete. See each ticket's own `Status:` line for detail.
 | 05 | Sign-in and per-Signer isolation | 5/7 — blocked on a database |
 | 06 | Fixture corpus and test harness | done |
 | 07 | Analysis seam — plain-English summary | done (live model unreached) |
-| 08 | Risk flags — verified citations, derived severity | partially built |
-| 09 | The checked-clean list | pending |
+| 08 | Risk flags — verified citations, derived severity | done — one criterion qualified |
+| 09 | The checked-clean list | done |
 | 10 | Settle remaining checklist thresholds | pending |
 | 11 | Counter-offers | pending |
 | 12 | Document Q&A with refusal | pending |
@@ -323,10 +323,14 @@ structural rather than conventional, which is the point:
   may only name a property the severity function actually used is therefore a compile
   error, not a rule someone has to remember.
 
-`flags` and `checkedClean` come back as empty arrays this ticket. An empty array is the
-honest answer to "no flag detection has been built yet"; a fabricated flag would not be.
-The screen says so explicitly, because a summary with nothing after it reads as a clean
-bill, which is the failure the spec cares most about.
+`flags` and `checkedClean` came back as empty arrays when this decision was made. An empty
+array was the honest answer to "no flag detection has been built yet"; a fabricated flag
+would not be. The screen said so explicitly, because a summary with nothing after it reads
+as a clean bill, which is the failure the spec cares most about. Ticket 08 filled `flags`
+and ticket 09 filled `checkedClean`, both through this shape rather than around it, which
+is what it was built for. `checkedClean` gained a third structural rule on the way: its
+type can only be produced by `clearedList`, which reads the flags, so a clause that was
+flagged cannot also be reported clean.
 
 `counterOffer` is nullable because ticket 08 ships flags before ticket 11 ships
 counter-offers. Null means "not drafted", never a placeholder.

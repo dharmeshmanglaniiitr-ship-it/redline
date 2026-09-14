@@ -26,6 +26,7 @@ import type { JsonObject, ModelGateway } from "@/lib/model/types";
 import { ModelResponseError } from "@/lib/model/types";
 
 import {
+  CHECKLIST_ENTRIES,
   FIXTURE_PAIRS,
   fixtureNames,
   loadFixture,
@@ -459,11 +460,20 @@ describe("the seam's refusals", () => {
   });
 });
 
-/** A gateway with one answer in it, running the caller's own `parse` as a client does. */
+/**
+ * A gateway with one answer in it, running the caller's own `parse` as a client does.
+ *
+ * The checklist examination is answered in full underneath, because `analyze()` refuses
+ * an examination that skips an entry (`tests/checked-clean.test.ts`) and these tests are
+ * about the findings, not about that refusal.
+ */
 function gatewayAnswering(payload: JsonObject): ModelGateway {
+  const sound: JsonObject = {
+    checklist: CHECKLIST_ENTRIES.map((entry) => ({ entry, cleared: true })),
+  };
   return {
     async complete(request) {
-      return request.response.parse(payload);
+      return request.response.parse({ ...sound, ...payload });
     },
   };
 }

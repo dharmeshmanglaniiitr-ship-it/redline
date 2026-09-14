@@ -13,28 +13,33 @@
  * scanned contract must never come back looking like a contract with nothing wrong in
  * it.
  *
- * What it returns is the whole `AnalysisResult` shape. The summary and the risk flags
- * are populated here; the checked-clean list and counter-offers arrive in tickets 09 and
- * 11 and return through this same function.
+ * What it returns is the whole `AnalysisResult` shape. The summary, the risk flags and
+ * the checked-clean list are populated here; counter-offers arrive in ticket 11 and
+ * return through this same function.
  *
- * Two jobs, two calls, because they are two different readings of the same text and one
- * failing is not a reason to lose the other's prompt. What keeps them honest is the same
- * thing in both cases: the narrowing in `parse` is where the real work happens. A
- * summary naming a Sender the document never mentions fails there, and so does a flag
+ * Three jobs, three calls, because they are three different readings of the same text
+ * and one failing is not a reason to lose the others' prompts. What keeps them honest is
+ * the same thing in every case: the narrowing in `parse` is where the real work happens.
+ * A summary naming a Sender the document never mentions fails there, and so does a flag
  * quoting a sentence the document does not contain — except that the flag is dropped
  * rather than throwing, because one bad citation among four is not a reason to tell a
- * Signer nothing (`docs/adr/0001`).
+ * Signer nothing (`docs/adr/0001`). An examination that skips a checklist entry fails
+ * there too, and that one throws: a clean bill missing a line is worse than no clean
+ * bill, because the Signer cannot see which line is missing.
  */
 
 import {
+  CHECKLIST_ENTRIES,
   SETTLED_CLAUSE_TYPES,
   SEVERITY_PROPERTIES,
+  type ChecklistEntry,
   type ClauseType,
   type PropertyValue,
 } from "./clauses";
 import type { JsonValue, ModelGateway, ResponseSchema } from "@/lib/model/types";
 import { ModelResponseError } from "@/lib/model/types";
 
+import { clearedList, type ChecklistVerdict } from "./checklist";
 import { createCitationVerifier } from "./citation";
 import type {
   AnalysisResult,
@@ -73,7 +78,7 @@ export async function analyze(
   request: AnalysisRequest,
   gateway: ModelGateway
 ): Promise<AnalysisResult> {
-  const [summary, flags] = await Promise.all([
+  const [summary, flags, examined] = await Promise.all([
     gateway.complete({
       prompt: summaryPrompt(request),
       response: summaryResponse(request.documentText),
@@ -82,16 +87,20 @@ export async function analyze(
       prompt: flagsPrompt(request),
       response: flagsResponse(request.documentText, request.jurisdiction),
     }),
+    gateway.complete({
+      prompt: checklistPrompt(request),
+      response: checklistResponse(),
+    }),
   ]);
 
   return {
     summary,
     flags,
-    // Nothing has worked through the checklist yet (ticket 09), so nothing is reported
-    // as clean. An empty list here says "not looked at", and the screen says so too —
-    // a quiet result that reads like a passed contract is the one thing this product
-    // must never show.
-    checkedClean: [],
+    // Derived from both readings rather than taken from either. An entry is reported
+    // clean only if the examination reached it and the findings do not contradict it,
+    // and `clearedList` is the only thing that can make this value
+    // (`lib/analysis/checklist.ts`).
+    checkedClean: clearedList(examined, flags),
     jurisdiction: request.jurisdiction,
     redLines: request.redLines,
   };
@@ -555,6 +564,179 @@ function asClauseType(value: JsonValue | undefined, index: number): ClauseType {
     FLAGS_SCHEMA,
     `findings[${index}].clauseType is "${String(value)}", which is not a clause type ` +
       "with a settled severity rule"
+  );
+}
+
+/* -------------------------------------------------------------------------------- */
+/* The checklist examination                                                           */
+/* -------------------------------------------------------------------------------- */
+
+const CHECKLIST_SCHEMA = "checklist_examination";
+
+/**
+ * What the model is asked when it works down the checklist.
+ *
+ * This is a separate reading from the flags, and it is deliberately a wider one. The
+ * flags pass looks for four kinds of clause it can grade; this pass covers all eight
+ * entries `docs/adr/0004` requires a clean bill to be made of, including the four whose
+ * dangerous-vs-standard thresholds `PRD.md` §5 leaves open. Those four can be read — is
+ * there an indemnity running one way only, is there a ceiling on what the Signer could
+ * be made to pay — long before there is a rule for how bad a bad one is.
+ *
+ * Every entry has to come back with a verdict, and the instruction says so, because the
+ * whole value of this list is that a Signer can tell "we looked and found nothing" from
+ * "we never looked". Absence of an answer is the failure case, which is why the schema
+ * makes it a rejection rather than a shorter list.
+ *
+ * Clearing is not the same as silence. A contract with no restrictive covenant clears on
+ * `non-compete`, and so does one whose covenant costs the Signer nothing; a point the
+ * reading could not settle from the text clears on neither.
+ */
+function checklistPrompt(request: AnalysisRequest): string {
+  return [
+    "You are working down a fixed checklist over a contract, for the person being asked",
+    "to sign it. Report only what this document actually says.",
+    "",
+    "These are the eight things Redline checks on a freelance contract. Go through all",
+    "eight, whether or not the contract mentions them:",
+    "",
+    "- payment-approval: what the signer's work has to meet before it counts as",
+    "  accepted and the invoice becomes payable.",
+    "- ip-assignment: what rights in the work pass to the client, and whether they stop",
+    "  at what the signer was engaged to produce.",
+    "- non-compete: what the signer is stopped from taking on once the job ends.",
+    "- termination-for-convenience: what the client owes if they end the agreement",
+    "  early without the signer being at fault.",
+    "- one-sided-indemnity: whether the signer has to cover the client's third-party",
+    "  claims without the client covering the signer's.",
+    "- uncapped-liability: whether anything puts a ceiling on what the signer could be",
+    "  made to pay.",
+    "- auto-renewal: whether the agreement renews itself without the signer agreeing",
+    "  again.",
+    "- unilateral-change: whether the client can change the fee, the scope or the terms",
+    "  on their own.",
+    "",
+    "For each entry return its name and cleared: true or false.",
+    "",
+    "- cleared: true means you read the contract on that point and there is nothing the",
+    "  signer needs to take up — either the contract does not do that thing at all, or",
+    "  it does it on terms that cost the signer nothing. A termination clause that pays",
+    "  for the unfinished work is clear. A contract with no restriction after the job",
+    "  is clear.",
+    "- cleared: false means there is something for the signer to take up, and also",
+    "  covers the case where the contract left you unable to settle the point. An open",
+    "  question is not the same answer as nothing to report, and must not be given as",
+    "  one.",
+    "",
+    "Rules:",
+    "- Answer on all eight, once each. An entry you leave out is read as an entry",
+    "  nothing looked at, and the whole answer is thrown away rather than shown to the",
+    "  signer as a shorter clean bill.",
+    "- Do not rank, score or grade anything, and do not say how serious a clause is.",
+    "- Do not mention law, enforceability, or what a court would do.",
+    jurisdictionLine(request.jurisdiction),
+    "",
+    "The contract:",
+    "",
+    request.documentText,
+  ].join("\n");
+}
+
+/**
+ * The examination the gateway is asked to produce, and the narrowing that makes a clean
+ * bill a claim rather than a courtesy.
+ *
+ * Three things fail here rather than downstream. An entry that is not on the checklist
+ * is not an entry at all. The same entry answered twice is two accounts of one reading
+ * that could disagree, so neither is taken. And an entry left out fails the whole
+ * examination: a shorter list would still render as a clean bill, one line quieter, with
+ * nothing on the screen to say which line went missing.
+ *
+ * What it does not do is decide anything. Whether a cleared entry is actually reported
+ * clean is `clearedList`'s answer, computed against the flags
+ * (`lib/analysis/checklist.ts`).
+ */
+function checklistResponse(): ResponseSchema<readonly ChecklistVerdict[]> {
+  return {
+    name: CHECKLIST_SCHEMA,
+    schema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["checklist"],
+      properties: {
+        checklist: {
+          type: "array",
+          description:
+            "One verdict for each of the eight checklist entries, in the order they " +
+            "were given. All eight are required.",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["entry", "cleared"],
+            properties: {
+              entry: { type: "string", enum: [...CHECKLIST_ENTRIES] },
+              cleared: {
+                type: "boolean",
+                description:
+                  "True only when the contract was read on this point and there is " +
+                  "nothing for the signer to take up.",
+              },
+            },
+          },
+        },
+      },
+    },
+    parse: (value) => {
+      const root = asObject(value, "the examination", CHECKLIST_SCHEMA);
+      const checklist = root.checklist;
+      if (!Array.isArray(checklist)) {
+        throw new ModelResponseError(CHECKLIST_SCHEMA, "checklist is not a list");
+      }
+
+      const verdicts = new Map<ChecklistEntry, ChecklistVerdict>();
+      checklist.forEach((item, index) => {
+        const where = `checklist[${index}]`;
+        const verdict = asObject(item, where, CHECKLIST_SCHEMA);
+        const entry = asChecklistEntry(verdict.entry, where);
+        if (typeof verdict.cleared !== "boolean") {
+          throw new ModelResponseError(
+            CHECKLIST_SCHEMA,
+            `${where}.cleared is "${String(verdict.cleared)}", which is not a verdict`
+          );
+        }
+        if (verdicts.has(entry)) {
+          throw new ModelResponseError(
+            CHECKLIST_SCHEMA,
+            `the examination answers "${entry}" twice`
+          );
+        }
+        verdicts.set(entry, { entry, cleared: verdict.cleared });
+      });
+
+      // The half of `docs/spec-v1.md`'s clean-bill test that the list's own contents
+      // cannot show: an entry with no verdict was not examined, and an examination that
+      // did not cover the checklist is not one a clean bill can be built from.
+      const missing = CHECKLIST_ENTRIES.filter((entry) => !verdicts.has(entry));
+      if (missing.length > 0) {
+        throw new ModelResponseError(
+          CHECKLIST_SCHEMA,
+          `the examination says nothing about ${missing.join(", ")}, so those entries ` +
+            "were not checked"
+        );
+      }
+
+      return [...verdicts.values()];
+    },
+  };
+}
+
+function asChecklistEntry(value: JsonValue | undefined, where: string): ChecklistEntry {
+  if (typeof value === "string" && (CHECKLIST_ENTRIES as readonly string[]).includes(value)) {
+    return value as ChecklistEntry;
+  }
+  throw new ModelResponseError(
+    CHECKLIST_SCHEMA,
+    `${where}.entry is "${String(value)}", which is not on the checklist`
   );
 }
 
