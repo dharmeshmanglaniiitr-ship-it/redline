@@ -48,6 +48,36 @@ export function ProofMark({
   );
 }
 
+/**
+ * Severity, on all three of its channels at once.
+ *
+ * Filled steps out of four, the severity word, and a visually hidden "severity, N of 4".
+ * `DESIGN.md`'s Never-By-Colour Rule requires all three to ship together: this is a
+ * WCAG 2.2 AA obligation rather than a style, and a severity display that survives both
+ * grayscale printing and screen-reader-only reading is the floor. Colour is the fourth,
+ * redundant channel. Removing any one of these breaks the commitment.
+ */
+export function SeverityMeter({ steps, word }: { steps: number; word: string }) {
+  return (
+    <span className="flex items-center gap-2">
+      <span className="flex gap-[3px]" aria-hidden="true">
+        {[1, 2, 3, 4].map((step) => (
+          <span
+            key={step}
+            className={`block h-3 w-[5px] border border-mark ${
+              step <= steps ? "bg-mark" : "bg-transparent"
+            }`}
+          />
+        ))}
+      </span>
+      <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-mark-deep">
+        {word}
+        <span className="sr-only"> severity, {steps} of 4</span>
+      </span>
+    </span>
+  );
+}
+
 /** The sheet's edges. Without them the proof stock reads as a page background. */
 export function TrimMarks() {
   const corner = "pointer-events-none absolute h-5 w-5 border-rule";

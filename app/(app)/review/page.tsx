@@ -10,6 +10,7 @@ import { GalleyFoot, LABEL, Masthead, ProofMark, STAMP } from "../_components/ga
 import { explainDocument } from "./actions";
 import { NOT_ASKED, type AnalysisState } from "./analysis-state";
 import { KeepInLibrary } from "./keep-in-library";
+import { MarkedGalley } from "./marked-galley";
 import { readFileInBrowser } from "./read-in-browser";
 
 type Screen =
@@ -117,6 +118,8 @@ export default function ReviewPage() {
   const result = screen.phase === "done" ? screen.result : null;
   const unreadable = result?.outcome === "unreadable" ? UNREADABLE[result.reason] : null;
   const extracted = result?.outcome === "extracted" ? result : null;
+  // Worst first, as `analyze()` ranked them. Nothing on this screen re-sorts them.
+  const flags = analysis.status === "explained" ? analysis.result.flags : [];
 
   return (
     <>
@@ -291,11 +294,12 @@ export default function ReviewPage() {
               <div className="mt-9 flex max-w-[58ch] items-start gap-3 border-t border-rule pt-5">
                 <ProofMark kind="query" className="mt-0.5 h-5 w-5 text-mark" />
                 <p className="text-[0.94rem] leading-[1.55] text-ink-soft">
-                  Redline has not looked for risky terms yet. What is above is an account
-                  of what the contract says, so it is no sign that the contract is fair to
-                  you.
+                  What is above says what the contract contains. The terms that would cost
+                  you are marked further down. Redline has not been through the rest of its
+                  checklist yet, so a clause it says nothing about is one it has not
+                  reached, and there is no drafted reply for you to send.
                   {analysis.result.jurisdiction.source === "undetermined" &&
-                    " It has also not worked out which law governs this agreement. Nothing above depends on that."}
+                    " It has also not worked out which law governs this agreement."}
                 </p>
               </div>
             </>
@@ -337,22 +341,50 @@ export default function ReviewPage() {
             <h2 id="the-text" className={LABEL}>
               {extracted.name}
             </h2>
-            <button
-              type="button"
-              className="cursor-pointer text-[0.94rem] font-semibold text-ink-soft underline decoration-mark decoration-2 underline-offset-4 transition-colors duration-200 hover:text-ink focus-visible:text-ink"
-              onClick={startOver}
-            >
-              Read a different document
-            </button>
+            <div className="flex flex-wrap items-baseline gap-x-7 gap-y-2">
+              {analysis.status === "explained" && (
+                <span className="numeric text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-ink-soft">
+                  {markedLegend(flags.length)}
+                </span>
+              )}
+              <button
+                type="button"
+                className="cursor-pointer text-[0.94rem] font-semibold text-ink-soft underline decoration-mark decoration-2 underline-offset-4 transition-colors duration-200 hover:text-ink focus-visible:text-ink"
+                onClick={startOver}
+              >
+                Read a different document
+              </button>
+            </div>
           </div>
 
-          <div className="mt-7 max-w-[58ch] space-y-6 font-document text-[1.06rem] leading-[1.62] text-ink">
-            {extracted.text.split("\n\n").map((paragraph, index) => (
-              <p key={index} className="whitespace-pre-line">
-                {paragraph}
+          {/* Nothing found is a real answer and it is said in full, because "no marks"
+              on its own would read as a contract that passed — and Redline has only
+              weighed four kinds of clause so far (`docs/spec-v1.md`). */}
+          {analysis.status === "explained" && flags.length === 0 && (
+            <div className="mt-7 flex max-w-[58ch] items-start gap-3">
+              <ProofMark kind="query" className="mt-0.5 h-5 w-5 text-mark" />
+              <p className="text-[0.98rem] leading-[1.55] text-ink-soft">
+                Redline weighed four things here: what your work has to meet before it
+                counts as accepted, how far the ownership clause reaches, what a
+                restriction after the job covers, and what you are owed if the client
+                ends it early. None of them came out badly in this document. That is four
+                questions answered. The rest of the checklist is still being built, so a
+                contract with no marks on it is one Redline has only partly read.
               </p>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {flags.length > 0 ? (
+            <MarkedGalley documentText={extracted.text} flags={flags} />
+          ) : (
+            <div className="mt-7 max-w-[58ch] space-y-6 font-document text-[1.06rem] leading-[1.62] text-ink">
+              {extracted.text.split("\n\n").map((paragraph, index) => (
+                <p key={index} className="whitespace-pre-line">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          )}
 
           {/* Only a document that was read can be kept, and the type says so: the
               unreadable arm carries no text to pass. */}
@@ -389,10 +421,20 @@ function stateLine(screen: Screen, analysis: AnalysisState): string {
     case "working":
       return `${read} · working through it`;
     case "explained":
-      return `${read} · summary below`;
+      return `${read} · ${markedLegend(analysis.result.flags.length)}`;
     default:
       return `${read} · no summary`;
   }
+}
+
+/**
+ * How many terms carry a mark, said the same way in the masthead, beside the document
+ * and to a screen reader. Zero is written out rather than left blank: a legend that goes
+ * quiet is indistinguishable from one that was never filled in.
+ */
+function markedLegend(marks: number): string {
+  if (marks === 0) return "Nothing marked";
+  return marks === 1 ? "1 term marked" : `${marks} terms marked`;
 }
 
 /** The legend beside the summary's own heading, saying where the reading has got to. */
@@ -431,8 +473,16 @@ function liveStatus(screen: Screen, analysis: AnalysisState): string {
       return read;
     case "working":
       return `${read} Working out what it commits you to.`;
-    case "explained":
-      return `${read} A summary of what it commits you to is below.`;
+    case "explained": {
+      const marks = analysis.result.flags.length;
+      const marked =
+        marks === 0
+          ? "Nothing in it is marked."
+          : marks === 1
+            ? "One term is marked below."
+            : `${marks} terms are marked below, worst first.`;
+      return `${read} A summary of what it commits you to is below. ${marked}`;
+    }
     case "model-not-set-up":
       return `${read} Redline cannot explain it on this deployment.`;
     case "nothing-to-read":

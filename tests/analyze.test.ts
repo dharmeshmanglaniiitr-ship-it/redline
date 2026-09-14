@@ -116,12 +116,14 @@ describe("analyze", () => {
   });
 
   it("reports nothing checked as nothing checked, never as a contract with nothing wrong in it", async () => {
-    // The adhesion contract has four dangerous clauses planted in it. Until ticket 08
-    // looks for them the analysis has no findings to report, and it reports none —
-    // rather than an invented one, and rather than a clean bill it has not earned.
+    // Ticket 08 filled `flags`, so the adhesion contract's four planted clauses now come
+    // back marked (`tests/risk-flags.test.ts` is where that is tested). The checklist is
+    // ticket 09's, and until it exists nothing is reported clean — an empty list here
+    // means "not looked at", and the screen says so rather than letting a quiet result
+    // read as a contract that passed.
     const { result } = await analyzeFixture("adhesion-contract.txt");
 
-    expect(result.flags).toEqual([]);
+    expect(result.flags.length).toBeGreaterThan(0);
     expect(result.checkedClean).toEqual([]);
   });
 
