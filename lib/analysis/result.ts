@@ -75,6 +75,23 @@ export interface RedLine {
 }
 
 /**
+ * One of the Signer's own red lines that a flagged clause meets (`docs/adr/0009`).
+ *
+ * This is the second reading of a clause and it is kept apart from the first. `severity`
+ * says what the wording does to anybody, derived from the clause's own properties
+ * (`docs/adr/0003`) and unmoved by who is reading or under whose law (`docs/adr/0007`).
+ * A crossing says this particular Signer wrote down that they will not accept it. Two
+ * different claims, so two different fields — and a crossing is what moves a flag up the
+ * list, never what moves its mark.
+ */
+export interface RedLineCrossing {
+  /** The Signer's own words, verbatim, so they recognise the line they wrote. */
+  readonly redLine: string;
+  /** Why this clause meets that line. Written in code, never by a model. */
+  readonly note: string;
+}
+
+/**
  * The plain-English account of what signing would commit the Signer to (user story 4),
  * naming who sent it and what it covers so they can tell they are looking at the right
  * document (user story 5).
@@ -124,6 +141,12 @@ interface FlagOfClause<T extends ClauseType> {
   readonly title: string;
   /** What it would cost the Signer, in their terms (user story 8). */
   readonly cost: string;
+  /**
+   * The Signer's own red lines this clause meets (`docs/adr/0009`). Empty for a Signer
+   * who has recorded none, and empty on every clause their lines say nothing about.
+   * Crossing a line moves a flag up the ranked list; it never moves `severity`.
+   */
+  readonly redLinesCrossed: readonly RedLineCrossing[];
   /** The severity-determining properties the document states, and their values. */
   readonly properties: Readonly<Partial<Record<SeverityProperty<T>, PropertyValue>>>;
   /** The ones it is silent on. A hedge names these and nothing else (`docs/adr/0006`). */
@@ -158,7 +181,11 @@ export type RiskFlag = { [T in ClauseType]: FlagOfClause<T> }[ClauseType];
  */
 export interface AnalysisResult {
   readonly summary: DocumentSummary;
-  /** Worst first, so ten minutes spent at the top is spent well (user story 6). */
+  /**
+   * The Signer's own lines first, then worst first, so ten minutes spent at the top is
+   * spent well (user story 6). With no red lines recorded it is worst first and nothing
+   * else, which is the order every earlier ticket expects (`docs/adr/0009`).
+   */
   readonly flags: readonly RiskFlag[];
   /** Checklist entries examined with nothing to report — data, not prose. */
   readonly checkedClean: ClearedChecklist;

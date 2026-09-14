@@ -29,10 +29,20 @@ import {
 } from "@/lib/document/extraction";
 import { openRouterAccess } from "@/lib/model/openrouter";
 import { saveDocument, type JurisdictionRecord } from "@/lib/supabase/documents";
+import {
+  addRedLine,
+  changeRedLine,
+  listRedLines,
+  removeRedLine,
+  signerRedLines,
+  LONGEST_RED_LINE,
+  type RedLinesOutcome,
+} from "@/lib/supabase/red-lines";
 
 import type { AnalysisState, ReadDocument } from "./analysis-state";
 import type { KeepState } from "./keep-state";
 import type { QuestionState } from "./question-state";
+import type { RedLineEdit, RedLinesState } from "./red-lines-state";
 
 /**
  * Explain what a document commits the Signer to, under the law that governs it.
@@ -57,6 +67,17 @@ import type { QuestionState } from "./question-state";
  * A governing-law reading that does not come back is not a reason to refuse the
  * analysis. It leaves the jurisdiction undetermined, which is a state this product knows
  * how to be in, and the Signer can still set it by hand.
+ *
+ * The Signer's red lines are read here rather than posted from the browser, and that is
+ * the point of them being read here at all: the standard a document is marked against
+ * comes from their account under row level security, so it is theirs by the same guarantee
+ * their documents are, and a page cannot claim a standard it was not given. It is also
+ * what makes an edit re-rank a document that is already on the screen — this runs again
+ * over the text the browser is still holding, with the standard as it now stands, and
+ * nothing is uploaded a second time (`docs/adr/0009`).
+ *
+ * A Signer with no account has no red lines and is read worst first, which is the whole of
+ * what signing out costs them here.
  */
 export async function explainDocument(
   document: ReadDocument,
@@ -89,12 +110,13 @@ export async function explainDocument(
     console.error("the governing-law reading did not come back:", cause);
   }
 
+  const redLines = await signerRedLines();
+
   try {
     const result = await analyze(
       {
         documentText: reread.text,
-        // Red lines are an input the analysis already takes; ticket 13 supplies them.
-        redLines: [],
+        redLines,
         jurisdiction: determineJurisdiction(detected, signerJurisdiction),
       },
       access.gateway
@@ -173,6 +195,96 @@ export async function answerAboutDocument(
         "again.",
     };
   }
+}
+
+/**
+ * The Signer's standing standard, read from their own account.
+ *
+ * Called once when the screen opens. It is a read and nothing else: a Signer who has never
+ * written a red line gets an empty list, which is a standard — Redline's own — rather than
+ * a gap.
+ */
+export async function readRedLines(): Promise<RedLinesState> {
+  return asRedLinesState(await listRedLines());
+}
+
+/**
+ * Add a line, rewrite one, or take one off.
+ *
+ * One action for the three moves rather than three, because they are one thing from the
+ * Signer's side — they are editing a standing document — and because each of them comes
+ * back the same way: the whole standard as the database now holds it. What the screen shows
+ * afterwards is what is actually stored, not what the browser assumed would be.
+ *
+ * Whose lines these are is never passed in. The row's account comes from the session, and
+ * `supabase/migrations/` decides what this session may touch, so the id of a line belonging
+ * to somebody else reaches nothing whatever this is called with.
+ */
+export async function reviseRedLines(edit: RedLineEdit): Promise<RedLinesState> {
+  if (edit.kind !== "remove") {
+    const text = edit.text.trim();
+    if (text === "") {
+      return withProblem(
+        await listRedLines(),
+        "There is nothing in that line. Write what you will not agree to and it goes on the list."
+      );
+    }
+    if (text.length > LONGEST_RED_LINE) {
+      return withProblem(
+        await listRedLines(),
+        `That is longer than a line. Keep it to about ${LONGEST_RED_LINE} characters: one thing you will not agree to, in your own words.`
+      );
+    }
+  }
+
+  const revised =
+    edit.kind === "add"
+      ? await addRedLine(edit.text)
+      : edit.kind === "change"
+        ? await changeRedLine(edit.id, edit.text)
+        : await removeRedLine(edit.id);
+
+  if (revised.outcome === "refused") {
+    console.error(`the red line could not be ${edit.kind === "remove" ? "removed" : "saved"}:`, revised.detail);
+    return withProblem(
+      await listRedLines(),
+      edit.kind === "remove"
+        ? "That line is still on the list. Nothing changed, so try again."
+        : "That line did not save. Check you have not already written it, then try again."
+    );
+  }
+
+  return asRedLinesState(revised);
+}
+
+/** One outcome from the database, as the state the screen draws. */
+function asRedLinesState(outcome: RedLinesOutcome): RedLinesState {
+  switch (outcome.outcome) {
+    case "listed":
+      return { status: "held", redLines: outcome.redLines, problem: null };
+    case "not-signed-in":
+      return { status: "not-signed-in" };
+    case "accounts-not-set-up":
+      return { status: "accounts-not-set-up" };
+    case "refused":
+      console.error("the red lines could not be read:", outcome.detail);
+      return {
+        status: "held",
+        redLines: [],
+        problem: "Your red lines did not load. Nothing has changed.",
+      };
+  }
+}
+
+/**
+ * The standard as it still stands, with what went wrong beside it.
+ *
+ * A failed edit leaves the list exactly as it was, so that is what the Signer is shown —
+ * blanking it would suggest the edit took something with it when it went.
+ */
+function withProblem(outcome: RedLinesOutcome, problem: string): RedLinesState {
+  const state = asRedLinesState(outcome);
+  return state.status === "held" ? { ...state, problem } : state;
 }
 
 export async function keepDocument(_previous: KeepState, form: FormData): Promise<KeepState> {

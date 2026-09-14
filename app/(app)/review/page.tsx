@@ -8,7 +8,7 @@ import type { ExtractionResult, UnreadableReason } from "@/lib/document/extracti
 import type { ExtractedDocument } from "@/lib/supabase/documents";
 
 import { GalleyFoot, LABEL, Masthead, ProofMark, STAMP } from "../_components/galley";
-import { explainDocument } from "./actions";
+import { explainDocument, readRedLines } from "./actions";
 import { NOT_ASKED, type AnalysisState } from "./analysis-state";
 import { ClearedList } from "./cleared-list";
 import { GoverningLaw, assumedLawLegend } from "./governing-law";
@@ -16,6 +16,8 @@ import { KeepInLibrary } from "./keep-in-library";
 import { MarkedGalley } from "./marked-galley";
 import { QuestionBox } from "./question-box";
 import { readFileInBrowser } from "./read-in-browser";
+import { RedLines } from "./red-lines";
+import { UNREAD, type RedLinesState } from "./red-lines-state";
 
 type Screen =
   | { phase: "waiting" }
@@ -80,8 +82,17 @@ export default function ReviewPage() {
   // is the same document and the same marks; only the law has moved, so blanking the
   // sheet back to "working" would take away the thing the Signer was just reading.
   const [rereading, setRereading] = useState(false);
+  // The Signer's standing standard, held here rather than inside the editor, because the
+  // reading depends on it and there is one of it per screen (`docs/adr/0009`).
+  const [redLines, setRedLines] = useState<RedLinesState>(UNREAD);
   const fileInput = useRef<HTMLInputElement>(null);
   const head = useRef<HTMLHeadingElement>(null);
+
+  // Read once, when the screen opens. The analysis reads them again on the server for
+  // itself; this copy is what the Signer edits.
+  useEffect(() => {
+    void readRedLines().then(setRedLines);
+  }, []);
 
   // A read finishing changes the whole sheet, so the reader is put at the top of it
   // rather than left holding a focus ring on a control that has moved.
@@ -158,7 +169,8 @@ export default function ReviewPage() {
   const result = screen.phase === "done" ? screen.result : null;
   const unreadable = result?.outcome === "unreadable" ? UNREADABLE[result.reason] : null;
   const extracted = result?.outcome === "extracted" ? result : null;
-  // Worst first, as `analyze()` ranked them. Nothing on this screen re-sorts them.
+  // In the order `analyze()` ranked them: the Signer's own lines first, then worst first
+  // (`docs/adr/0009`). Nothing on this screen re-sorts them.
   const flags = analysis.status === "explained" ? analysis.result.flags : [];
   const jurisdiction = analysis.status === "explained" ? analysis.result.jurisdiction : null;
 
@@ -292,6 +304,19 @@ export default function ReviewPage() {
         </section>
       )}
 
+      {/* The standard stands whether or not there is a document under it, because it is
+          not about this contract — it is what every contract gets read against. Setting it
+          up before the first one is brought in is the point of it persisting. */}
+      {extracted === null && (
+        <RedLines
+          state={redLines}
+          onState={setRedLines}
+          onRevised={() => {}}
+          working={false}
+          marking={false}
+        />
+      )}
+
       {/* Nothing stands under this heading until the reading has started, so the section
           arrives with the first thing it has to say rather than as an empty frame. */}
       {extracted && analysis.status !== "not-asked" && (
@@ -396,6 +421,20 @@ export default function ReviewPage() {
           jurisdiction={analysis.result.jurisdiction}
           working={rereading}
           onSet={(law) => setLaw(extracted, law)}
+        />
+      )}
+
+      {/* The standard this was marked against, under the law it was read under. The two
+          are the same kind of thing — what the reading was made against rather than what
+          it found — and both are correctable in place. Editing a line reads the document
+          that is already here again; nothing is uploaded twice (`docs/adr/0009`). */}
+      {extracted && analysis.status === "explained" && (
+        <RedLines
+          state={redLines}
+          onState={setRedLines}
+          onRevised={() => void explain(extracted, chosenLaw, true)}
+          working={rereading}
+          marking
         />
       )}
 

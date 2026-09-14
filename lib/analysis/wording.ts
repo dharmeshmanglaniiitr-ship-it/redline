@@ -110,6 +110,25 @@ export function hedgeNoteFor(unstatedProperties: readonly string[]): string | nu
   return `The contract does not say ${joinWithOr(named)}, so Redline has read ${gaps} the way that costs you most.`;
 }
 
+/**
+ * Why a clause is sitting above the others: because the Signer said so, not because
+ * Redline moved its mark (`docs/adr/0009`).
+ *
+ * Two cases, and the second is the one that needed writing. A clause Redline already had
+ * something to say about needs only the reason it came up the list. A clause Redline reads
+ * as ordinary needs the disagreement stated out loud, because the meter beside it still
+ * says the wording is standard and a Signer is owed both halves of that rather than left
+ * to wonder why a mark reading "noted" is at the top of their page.
+ *
+ * Neither sentence quotes the red line. The line itself is shown beside this, in the
+ * Signer's own words, which is the only claim being made here.
+ */
+export function redLineNoteFor(met: "already-marked" | "reads-as-ordinary"): string {
+  return met === "already-marked"
+    ? "This is one of the lines you wrote down, and the contract crosses it."
+    : "Redline reads this clause as standard wording. You have said you will not sign one, so it is here at the top.";
+}
+
 /** What to call this finding in the margin and in the ranked index. */
 export function titleFor(reading: ClauseReading, triggers: readonly string[]): string {
   const marked = triggers.length > 0;

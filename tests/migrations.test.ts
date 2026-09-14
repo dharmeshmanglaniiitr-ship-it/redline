@@ -95,6 +95,47 @@ describe.each(schema.tables.map((table) => [table.qualifiedName, table] as const
       ).toContain(qualifiedName);
     });
 
+    it("is unreachable by the publishable key with no session behind it", () => {
+      // Belt and braces, and both are written on purpose. Every policy below is scoped to
+      // the `authenticated` role, so an anonymous caller matches none of them; the grant is
+      // withdrawn as well so the refusal does not rest on one mechanism. A table added
+      // later that keeps the policies and drops this line is a table whose confidentiality
+      // has one fewer thing holding it up, which is exactly the kind of quiet regression
+      // this file exists to catch.
+      const withdrawn = schema.revokes.filter(
+        (revoke) => revoke.table === qualifiedName && revoke.roles.includes("anon")
+      );
+      expect(
+        withdrawn.length,
+        `${qualifiedName} (${table.file}) never runs ` +
+          `"revoke all on table ${qualifiedName} from anon", so the publishable key's own ` +
+          "grant on it is whatever the schema hands out by default"
+      ).toBeGreaterThan(0);
+    });
+
+    it("hands ownership to the session rather than to whoever is writing the row", () => {
+      // `signer_id uuid not null default auth.uid()`. The default is what makes an insert
+      // that forgets the column land on the right account instead of failing, and it is why
+      // lib/supabase/ never passes an id: the application asserting ownership is the
+      // arrangement row level security replaces.
+      const owning = table.columns.filter((column) =>
+        /\breferences\s+auth\s*\.\s*users\b/i.test(column.definition)
+      );
+      expect(
+        owning.length,
+        `${qualifiedName} (${table.file}) points at auth.users from no single column`
+      ).toBeGreaterThan(0);
+
+      for (const column of owning) {
+        expect(
+          /\bdefault\s+auth\s*\.\s*uid\s*\(\s*\)/i.test(column.definition),
+          `${qualifiedName}.${column.name} (${table.file}) is the column that says which ` +
+            "Signer owns the row, but it has no `default auth.uid()`, so an insert that " +
+            "omits it writes a row owned by nobody rather than by the Signer making it"
+        ).toBe(true);
+      }
+    });
+
     it("has at least one policy", () => {
       // Row level security with no policy denies everything, which is safe but means the
       // table is unreachable. Either way it is not what anyone intended.
@@ -159,6 +200,25 @@ describe.each(schema.tables.map((table) => [table.qualifiedName, table] as const
               ).not.toBeNull();
             }
           }
+        });
+
+        it("applies to a signed-in Signer and not to everybody", () => {
+          // A policy with no `to` clause applies to `public`, which in Postgres is every
+          // role including the one the publishable anon key uses. Scoped to auth.uid() it
+          // would still match no rows for a caller with no session — but that is the
+          // filter doing the work by accident, and the two guarantees are worth keeping
+          // separate.
+          expect(
+            policy.roles,
+            `policy "${name}" on ${qualifiedName} (${policy.file}) names no role, so it ` +
+              "applies to public — every role, the publishable anon key's included"
+          ).not.toEqual([]);
+          expect(
+            policy.roles,
+            `policy "${name}" on ${qualifiedName} (${policy.file}) applies to ` +
+              `${policy.roles.join(", ")}, which reaches callers with no session`
+          ).not.toContain("anon");
+          expect(policy.roles, `policy "${name}" on ${qualifiedName}`).not.toContain("public");
         });
 
         it("scopes every expression it declares to auth.uid()", () => {

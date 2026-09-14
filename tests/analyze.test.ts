@@ -234,6 +234,8 @@ function nonCompeteFlag(clause: PlantedClause): RiskFlag {
     clauseType: "non-compete",
     sourceSentence: clause.sourceSentence,
     severity: clause.expectedSeverity,
+    // A Signer with no standing note of their own crosses none of it (`docs/adr/0009`).
+    redLinesCrossed: [],
     title: "What you cannot do after this ends",
     cost: "the kind of work you do now is closed off after this engagement ends",
     properties: clause.properties as Readonly<

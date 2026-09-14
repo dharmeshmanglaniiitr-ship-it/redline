@@ -26,6 +26,7 @@ import { severityWord } from "@/lib/analysis/wording";
 import { clauseReferenceIn, markUpDocument } from "@/lib/text/marking";
 
 import { LABEL, ProofMark, SeverityMeter, type MarkKind } from "../_components/galley";
+import { CROSSED_HEADING, crossedLegend } from "./red-lines";
 
 /**
  * Which proof mark each kind of finding carries.
@@ -163,8 +164,14 @@ export function MarkedGalley({
       )}
 
       <nav aria-labelledby="worst-first" className="max-w-[24rem]">
+        {/* The heading says how the list is actually ordered. A Signer whose own lines
+            moved something to the top is owed that in one line, rather than being left to
+            work out why a mark reading "noted" is above one reading "highest"
+            (`docs/adr/0009`). */}
         <h3 id="worst-first" className={LABEL}>
-          Worst first
+          {flags.some((flag) => flag.redLinesCrossed.length > 0)
+            ? "Your lines first, then worst first"
+            : "Worst first"}
         </h3>
         <ol className="mt-3 border-t border-rule">
           {flags.map((flag, index) => {
@@ -203,6 +210,14 @@ export function MarkedGalley({
                       {reference && (
                         <span className="numeric font-document text-[0.82rem] text-ink-soft">
                           Clause {reference}
+                        </span>
+                      )}
+                      {/* Why this row is where it is. Kept off the meter, because the meter
+                          says what the wording costs anybody and this says what the Signer
+                          told Redline about it (`docs/adr/0009`). */}
+                      {flag.redLinesCrossed.length > 0 && (
+                        <span className="border border-mark-deep px-1.5 py-px text-[0.62rem] font-bold uppercase tracking-[0.14em] text-mark-deep">
+                          {crossedLegend(flag.redLinesCrossed.length)}
                         </span>
                       )}
                     </span>
@@ -350,6 +365,27 @@ function MarginMark({
               <ProofMark kind="query" className="mt-0.5 h-4 w-4 text-mark" />
               <span>{flag.hedgeNote}</span>
             </p>
+          )}
+          {/* The Signer's own standard, quoted back at them in their own words. It sits
+              under the cost and the hedge because it answers a different question: not
+              what this clause does, but why it is the one they are looking at
+              (`docs/adr/0009`). */}
+          {flag.redLinesCrossed.length > 0 && (
+            <div className="mt-3 max-w-[40ch] border-t border-rule pt-3">
+              <h4 className={LABEL}>{CROSSED_HEADING}</h4>
+              <ul className="mt-2 space-y-3">
+                {flag.redLinesCrossed.map((crossing) => (
+                  <li key={crossing.redLine}>
+                    <p className="border-l-2 border-mark pl-3 font-document text-[0.94rem] leading-[1.5] text-ink">
+                      {crossing.redLine}
+                    </p>
+                    <p className="mt-1.5 pl-3 text-[0.86rem] leading-[1.5] text-ink-soft">
+                      {crossing.note}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
           {flag.counterOffer && <DraftedReply offer={flag.counterOffer} />}
         </>

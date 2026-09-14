@@ -45,11 +45,13 @@ import {
   counterOfferFor,
   type ContractVocabulary,
 } from "./counter-offer";
+import { crossingsOf, redLinesBriefing } from "./red-lines";
 import type {
   AnalysisResult,
   DocumentSummary,
   Jurisdiction,
   RedLine,
+  RedLineCrossing,
   RiskFlag,
   Severity,
 } from "./result";
@@ -65,7 +67,15 @@ import { costFor, flagId, hedgeNoteFor, titleFor } from "./wording";
 export interface AnalysisRequest {
   /** The document's extracted text, as `readExtractedText` normalized it. */
   readonly documentText: string;
-  /** The Signer's own red lines. They rank findings (ticket 13), not the summary. */
+  /**
+   * The Signer's own red lines, in their own words.
+   *
+   * They go into the clause reading and they rank what comes back (`docs/adr/0009`).
+   * They never reach the summary or the checklist, which are accounts of what the
+   * document says and are the same whoever is holding it. An empty list is the ordinary
+   * case — a Signer with no account has none — and reads exactly as it did before red
+   * lines existed.
+   */
   readonly redLines: readonly RedLine[];
   /** Never defaulted. `undetermined` is a state the analysis runs in (`docs/adr/0007`). */
   readonly jurisdiction: Jurisdiction;
@@ -89,7 +99,7 @@ export async function analyze(
     }),
     gateway.complete({
       prompt: flagsPrompt(request),
-      response: flagsResponse(request.documentText, request.jurisdiction),
+      response: flagsResponse(request.documentText, request.jurisdiction, request.redLines),
     }),
     gateway.complete({
       prompt: checklistPrompt(request),
@@ -321,6 +331,9 @@ function flagsPrompt(request: AnalysisRequest): string {
     "- Do not rank, score or grade anything. Do not say how serious a clause is.",
     "- Do not mention law, enforceability, or what a court would do.",
     jurisdictionLine(request.jurisdiction),
+    // The Signer's own standard, read with the clauses rather than applied to them
+    // afterwards (`docs/adr/0009`). Nothing at all when they have recorded none.
+    ...redLinesBriefing(request.redLines),
     "",
     "The contract:",
     "",
@@ -345,12 +358,18 @@ function flagsPrompt(request: AnalysisRequest): string {
  * the reading carries. If the response contains a severity number it is ignored, because
  * the schema does not describe one and nothing here looks for one.
  *
- * Flags come back worst first, with ties broken by where the sentence sits in the
- * document, so the order a Signer reads is stable between runs over the same text.
+ * **The Signer's red lines order the list; they do not shorten it.** Every clause that
+ * came back with a verified citation is returned, whatever their standard says
+ * (`docs/adr/0009`). What changes is which one they meet first.
+ *
+ * Flags come back with the lines the Signer said they will not cross at the top, then
+ * worst first, with ties broken by where the sentence sits in the document, so the order
+ * a Signer reads is stable between runs over the same text and the same standard.
  */
 function flagsResponse(
   documentText: string,
-  jurisdiction: Jurisdiction
+  jurisdiction: Jurisdiction,
+  redLines: readonly RedLine[]
 ): ResponseSchema<readonly RiskFlag[]> {
   return {
     name: FLAGS_SCHEMA,
@@ -446,16 +465,28 @@ function flagsResponse(
         cited.push({ reading: readingOf(clauseType, properties), sourceSentence });
       });
 
-      // Worst first, because ten minutes spent at the top of the list should be spent on
-      // the clause that costs most (user story 6). Two clauses worth the same are left
-      // in the order the Signer will meet them when they scroll their own contract.
+      // The Signer's own lines first, then worst first, because ten minutes spent at the
+      // top of the list should be spent on what they came to find out about — and when
+      // they have said nothing, on the clause that costs most (user story 6). Two clauses
+      // standing equally are left in the order the Signer will meet them when they scroll
+      // their own contract.
+      //
+      // Every clause that got this far is in this list and stays in it. A red line sorts
+      // it; nothing here drops a row on account of one (`docs/adr/0009`).
       const ranked = cited
-        .map((entry) => ({
-          ...entry,
-          severity: deriveSeverity(entry.reading),
-          at: documentText.indexOf(entry.sourceSentence),
-        }))
-        .sort((a, b) => b.severity - a.severity || a.at - b.at);
+        .map((entry) => {
+          const triggers = severityTriggers(entry.reading);
+          return {
+            ...entry,
+            severity: deriveSeverity(entry.reading),
+            redLinesCrossed: crossingsOf(redLines, entry.reading.clauseType, triggers),
+            at: documentText.indexOf(entry.sourceSentence),
+          };
+        })
+        .sort(
+          (a, b) =>
+            crossed(b) - crossed(a) || b.severity - a.severity || a.at - b.at
+        );
 
       // Read once for the document rather than once per flag: the parties' defined terms
       // are a fact about the contract, and every redraft over it speaks in the same ones.
@@ -469,6 +500,7 @@ function flagsResponse(
           entry.reading,
           entry.sourceSentence,
           entry.severity,
+          entry.redLinesCrossed,
           ordinal,
           jurisdiction,
           vocabulary
@@ -476,6 +508,18 @@ function flagsResponse(
       });
     },
   };
+}
+
+/**
+ * Whether this clause meets something the Signer wrote down, as a sort key.
+ *
+ * One bit, not a count. A clause that crosses three of somebody's lines is not three times
+ * the clause that crosses one, and letting the count decide would put a vaguely worded
+ * standing note above the sentence that will actually cost them. Inside the group that
+ * crosses something, severity orders as it always did.
+ */
+function crossed(entry: { readonly redLinesCrossed: readonly RedLineCrossing[] }): number {
+  return entry.redLinesCrossed.length > 0 ? 1 : 0;
 }
 
 /**
@@ -503,6 +547,7 @@ function flagFrom(
   reading: ClauseReading,
   sourceSentence: string,
   severity: Severity,
+  redLinesCrossed: readonly RedLineCrossing[],
   ordinal: number,
   jurisdiction: Jurisdiction,
   vocabulary: ContractVocabulary
@@ -512,6 +557,9 @@ function flagFrom(
     id: flagId(reading.clauseType, ordinal),
     sourceSentence,
     severity,
+    // Carried beside severity rather than folded into it. The mark says what the wording
+    // does; this says what the Signer told Redline about it (`docs/adr/0009`).
+    redLinesCrossed,
     title: titleFor(reading, triggers),
     cost: costFor(reading, triggers, jurisdiction),
     counterOffer: counterOfferFor(reading, sourceSentence, triggers, vocabulary),

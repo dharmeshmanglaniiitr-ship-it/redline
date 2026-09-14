@@ -54,10 +54,25 @@ export interface MigrationPolicy {
   readonly table: string;
   /** Expanded: `for all` becomes every command, so callers never special-case it. */
   readonly commands: readonly PolicyCommand[];
+  /**
+   * The roles named in the policy's `to` clause, lower-cased. Empty where there is none,
+   * which in Postgres means `public` — every role, the session's and the anon key's
+   * alike.
+   */
+  readonly roles: readonly string[];
   /** The `using` expression with its outer parentheses removed, or null if absent. */
   readonly using: string | null;
   /** The `with check` expression with its outer parentheses removed, or null if absent. */
   readonly withCheck: string | null;
+}
+
+/** One `revoke ... on table X from role` statement, as the migrations write it. */
+export interface MigrationRevoke {
+  readonly file: string;
+  /** Schema-qualified name of the table the grant was withdrawn on. */
+  readonly table: string;
+  /** The roles it was withdrawn from, lower-cased. */
+  readonly roles: readonly string[];
 }
 
 export interface MigrationSchema {
@@ -67,6 +82,8 @@ export interface MigrationSchema {
   /** Qualified names of every table that `enable row level security` was run on. */
   readonly rowLevelSecurityEnabled: readonly string[];
   readonly policies: readonly MigrationPolicy[];
+  /** Every grant the migrations withdraw, so the second line of defence is assertable. */
+  readonly revokes: readonly MigrationRevoke[];
 }
 
 /** Parse every migration in `supabase/migrations/`, in file-name order. */
@@ -78,6 +95,7 @@ export function readMigrationSchema(): MigrationSchema {
   const tables: MigrationTable[] = [];
   const rowLevelSecurityEnabled: string[] = [];
   const policies: MigrationPolicy[] = [];
+  const revokes: MigrationRevoke[] = [];
 
   for (const file of files) {
     const sql = readFileSync(MIGRATION_DIR + file, "utf8");
@@ -93,11 +111,16 @@ export function readMigrationSchema(): MigrationSchema {
         continue;
       }
       const policy = parseCreatePolicy(statement, file);
-      if (policy !== null) policies.push(policy);
+      if (policy !== null) {
+        policies.push(policy);
+        continue;
+      }
+      const revoke = parseRevoke(statement, file);
+      if (revoke !== null) revokes.push(revoke);
     }
   }
 
-  return { files, tables, rowLevelSecurityEnabled, policies };
+  return { files, tables, rowLevelSecurityEnabled, policies, revokes };
 }
 
 /**
@@ -269,12 +292,20 @@ function parseCreatePolicy(statement: string, file: string): MigrationPolicy | n
   const usingAt = /\busing\s*\(/i.exec(flat);
   const withCheckAt = /\bwith\s+check\s*\(/i.exec(flat);
 
+  // Read after the table name and before the filters, so a `to` inside the policy's own
+  // quoted name or inside a `using` expression is never mistaken for the role clause.
+  const clauses = flat.slice(
+    match[0].length,
+    Math.min(usingAt?.index ?? flat.length, withCheckAt?.index ?? flat.length)
+  );
+
   return {
     file,
     name: unquote(match[1]),
     table: qualify(match[2]).qualifiedName,
     commands:
       command === "all" ? POLICY_COMMANDS : [command as PolicyCommand],
+    roles: rolesIn(/\bto\s+(.+)$/i.exec(clauses)?.[1]),
     using:
       usingAt === null
         ? null
@@ -284,6 +315,35 @@ function parseCreatePolicy(statement: string, file: string): MigrationPolicy | n
         ? null
         : balancedParentheses(flat, withCheckAt.index + withCheckAt[0].length - 1),
   };
+}
+
+const REVOKE =
+  /^revoke\s+(?:grant\s+option\s+for\s+)?.*?\son\s+(?:table\s+)?((?:"[^"]+"|[A-Za-z_][\w$]*)(?:\s*\.\s*(?:"[^"]+"|[A-Za-z_][\w$]*))?)\s+from\s+(.+)$/i;
+
+/**
+ * A withdrawn grant.
+ *
+ * Both migrations revoke everything from `anon` on top of scoping their policies to the
+ * `authenticated` role, so the refusal does not rest on one mechanism. That is only worth
+ * writing if something checks it is still there, which is what this is parsed for.
+ */
+function parseRevoke(statement: string, file: string): MigrationRevoke | null {
+  const match = REVOKE.exec(statement.replace(/\s+/g, " "));
+  if (match === null) return null;
+  return {
+    file,
+    table: qualify(match[1]).qualifiedName,
+    roles: rolesIn(match[2]),
+  };
+}
+
+/** The role names in a comma-separated role list, lower-cased and unquoted. */
+function rolesIn(clause: string | undefined): readonly string[] {
+  if (clause === undefined) return [];
+  return clause
+    .split(",")
+    .map((role) => unquote(role.trim().replace(/;$/, "")))
+    .filter((role) => role !== "");
 }
 
 /** The contents of the parenthesised group that opens at `open`, or null if unbalanced. */
